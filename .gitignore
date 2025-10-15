@@ -1,0 +1,98 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+.env
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+
+######## BACKEND - NestJS ########
+# compiled output
+/hangbank_server/dist
+/hangbank_server/dist/*
+/hangbank_server/node_modules
+/hangbank_server/build
+
+# Logs
+/hangbank_server/logs
+/hangbank_server/*.log
+/hangbank_server/npm-debug.log*
+/hangbank_server/pnpm-debug.log*
+/hangbank_server/yarn-debug.log*
+/hangbank_server/yarn-error.log*
+/hangbank_server/lerna-debug.log*
+
+# OS
+/hangbank_server/.DS_Store
+
+# Tests
+/hangbank_server/coverage
+/hangbank_server/.nyc_output
+
+# IDEs and editors
+/hangbank_server/.idea
+/hangbank_server/.project
+/hangbank_server/.classpath
+/hangbank_server/.c9/
+/hangbank_server/*.launch
+/hangbank_server/.settings/
+/hangbank_server/*.sublime-workspace
+
+# IDE - VSCode
+/hangbank_server/.vscode/*
+/hangbank_server/!.vscode/settings.json
+/hangbank_server/!.vscode/tasks.json
+/hangbank_server/!.vscode/launch.json
+/hangbank_server/!.vscode/extensions.json
+
+# dotenv environment variable files
+/hangbank_server/.env
+/hangbank_server/.env.development.local
+/hangbank_server/.env.test.local
+/hangbank_server/.env.production.local
+/hangbank_server/.env.local
+
+# temp directory
+/hangbank_server/.temp
+/hangbank_server/.tmp
+
+# Runtime data
+/hangbank_server/pids
+/hangbank_server/*.pid
+/hangbank_server/*.seed
+/hangbank_server/*.pid.lock
+
+# Diagnostic reports (https://nodejs.org/api/report.html)
+/hangbank_server/report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+*.docx
