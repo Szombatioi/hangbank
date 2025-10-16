@@ -1,5 +1,6 @@
 import { UUID } from "crypto";
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { AudioBlock } from "src/audio_block/entities/audio_block.entity";
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 export enum Gender {
     Male = "Male",
@@ -24,4 +25,7 @@ export class User {
 
     @Column( { nullable: false, type: "enum", enum: Gender,  } )
     gender: Gender;
+
+    @OneToMany(() => AudioBlock, (audioBlock) => audioBlock.user)
+    audioBlocks: AudioBlock[];
 }

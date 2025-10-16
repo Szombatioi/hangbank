@@ -10,6 +10,10 @@ import { MetadataModule } from './metadata/metadata.module';
 import { DatasetModule } from './dataset/dataset.module';
 import { Dataset } from './dataset/entities/dataset.entity';
 import { Metadata } from './metadata/entities/metadata.entity';
+import { AudioBlockModule } from './audio_block/audio_block.module';
+import { CorpusBlockModule } from './corpus_block/corpus_block.module';
+import { AudioBlock } from './audio_block/entities/audio_block.entity';
+import { CorpusBlock } from './corpus_block/entities/corpus_block.entity';
 
 @Module({
   imports: [
@@ -23,13 +27,15 @@ import { Metadata } from './metadata/entities/metadata.entity';
       username: process.env.DB_USER,
       password: process.env.DB_PASS,
       database: process.env.DB_NAME,
-      entities: [User, Metadata, Dataset],
+      entities: [User, Metadata, Dataset, AudioBlock, CorpusBlock],
       synchronize: true, //TODO: replace this with migrations in production
     }),
     MinioModule,
     UserModule,
     MetadataModule,
-    DatasetModule
+    DatasetModule,
+    AudioBlockModule,
+    CorpusBlockModule
   ],
   controllers: [AppController],
   providers: [AppService],
