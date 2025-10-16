@@ -4,6 +4,12 @@ import { AppService } from './app.service';
 import { MinioModule } from './minio/minio.module';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { UserModule } from './user/user.module';
+import { User } from './user/entities/user.entity';
+import { MetadataModule } from './metadata/metadata.module';
+import { DatasetModule } from './dataset/dataset.module';
+import { Dataset } from './dataset/entities/dataset.entity';
+import { Metadata } from './metadata/entities/metadata.entity';
 
 @Module({
   imports: [
@@ -17,10 +23,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       username: process.env.DB_USER,
       password: process.env.DB_PASS,
       database: process.env.DB_NAME,
-      entities: [],
+      entities: [User, Metadata, Dataset],
       synchronize: true, //TODO: replace this with migrations in production
     }),
-    MinioModule
+    MinioModule,
+    UserModule,
+    MetadataModule,
+    DatasetModule
   ],
   controllers: [AppController],
   providers: [AppService],
