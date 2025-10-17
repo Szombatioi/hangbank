@@ -96,3 +96,45 @@ next-env.d.ts
 /hangbank_server/report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 *.docx
+
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/hangbank_ui/node_modules
+/hangbank_ui/.pnp
+/hangbank_ui/.pnp.*
+/hangbank_ui/.yarn/*
+!/hangbank_ui/.yarn/patches
+!/hangbank_ui/.yarn/plugins
+!/hangbank_ui/.yarn/releases
+!/hangbank_ui/.yarn/versions
+
+# testing
+/hangbank_ui/coverage
+
+# next.js
+/hangbank_ui/.next/
+/hangbank_ui/out/
+
+# production
+/hangbank_ui/build
+
+# misc
+/hangbank_ui/.DS_Store
+/hangbank_ui/*.pem
+
+# debug
+/hangbank_ui/npm-debug.log*
+/hangbank_ui/yarn-debug.log*
+/hangbank_ui/yarn-error.log*
+/hangbank_ui/.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+/hangbank_ui/.env*
+
+# vercel
+/hangbank_ui/.vercel
+
+# typescript
+/hangbank_ui/*.tsbuildinfo
+/hangbank_ui/next-env.d.ts
