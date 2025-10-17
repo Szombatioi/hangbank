@@ -15,26 +15,47 @@ import type { Response } from 'express';
 
 @Controller('minio')
 export class MinioController {
-  constructor(private readonly minioService: MinioService) {}
+  constructor(private readonly minioService: MinioService) { }
 
-  @Post('upload')
+  private readonly acceptedDocumentMimeTypes = [
+    "application/pdf",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/msword",
+    "text/plain"
+  ];
+
+  @Post(':bucket/upload')
   @UseInterceptors(FileInterceptor('file'))
-  async uploadFile(@UploadedFile() file: Express.Multer.File) {
+  async uploadFile(@Param('bucket') bucket: string, @UploadedFile() file: Express.Multer.File) {
     if (!file) {
       throw new HttpException('No file uploaded', HttpStatus.BAD_REQUEST);
     }
 
-    if (!file.mimetype.startsWith('audio/')) {
+    if (bucket === 'audio' && !file.mimetype.startsWith('audio/')) {
       throw new HttpException('Only audio files allowed', HttpStatus.BAD_REQUEST);
     }
+    else if (bucket === 'corpus' && !this.acceptedDocumentMimeTypes.includes(file.mimetype)) {
+      throw new HttpException('Only document files allowed', HttpStatus.BAD_REQUEST);
+    }
 
-    return this.minioService.uploadAudio(file);
+    try {
+      return this.minioService.uploadAudio(file, bucket);
+    } catch (error) {
+      throw new HttpException('File upload failed', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
   }
 
-  @Get('download/:filename')
-  async downloadFile(@Param('filename') filename: string, @Res() res: Response) {
-    const fileStream = await this.minioService.downloadAudio(filename);
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    fileStream.pipe(res);
+  @Get(':bucket/download/:filename')
+  async downloadFile(@Param('bucket') bucket: string, @Param('filename') filename: string, @Res() res: Response) {
+    try {
+      const fileStream = await this.minioService.downloadAudio(filename, bucket);
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      fileStream.pipe(res);
+    }
+    catch (error) {
+      throw new HttpException('File download failed', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
+
 }

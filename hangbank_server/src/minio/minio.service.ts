@@ -6,7 +6,10 @@ import * as stream from 'stream';
 @Injectable()
 export class MinioService {
   private readonly logger = new Logger(MinioService.name);
-  private readonly bucketName = 'audio-files';
+  private readonly audioBucket = 'audio';
+  private readonly corpusBucket = 'corpus';
+  private readonly corpusBlockBucket = 'corpus-blocks';
+  private readonly bucketNames = [this.audioBucket, this.corpusBucket, this.corpusBlockBucket];
   private readonly minioClient: Client;
 
   constructor() {
@@ -17,35 +20,42 @@ export class MinioService {
       accessKey: process.env.MINIO_ACCESS_KEY || 'minioadmin',
       secretKey: process.env.MINIO_SECRET_KEY || 'minioadmin123',
     });
-    this.ensureBucketExists();
+    this.ensureBucketsExists();
   }
 
-  private async ensureBucketExists() {
-    const exists = await this.minioClient.bucketExists(this.bucketName).catch(() => false);
-    if (!exists) {
-      await this.minioClient.makeBucket(this.bucketName, 'us-east-1');
-      this.logger.log(`Created bucket: ${this.bucketName}`);
-    }
+  //Making sure all required buckets exist on MinIO server
+  private async ensureBucketsExists() {
+    this.bucketNames.forEach(async (bucketName) => {
+      const exists = await this.minioClient.bucketExists(bucketName).catch(() => false);
+      if (!exists) {
+        await this.minioClient.makeBucket(bucketName, 'us-east-1');
+        this.logger.log(`Created bucket: ${bucketName}`);
+      }
+    });
   }
 
-  async uploadAudio(file: Express.Multer.File) {
+  async uploadAudio(file: Express.Multer.File, bucket: string) {
     const objectName = `${Date.now()}-${path.basename(file.originalname)}`;
 
+    if(!this.bucketNames.includes(bucket)){
+      throw new InternalServerErrorException('Invalid bucket name');
+    }
+
     try {
+      //uploading audio object
       await this.minioClient.putObject(
-        this.bucketName,
+        bucket,
         objectName,
         file.buffer,
         file.size,
         {
           'Content-Type': file.mimetype,
-          'test-metadata': 'value',
-          'isCool': 'true',
         },
       );
+
       return {
         filename: objectName,
-        url: `${process.env.MINIO_PUBLIC_URL || 'http://localhost:9000'}/${this.bucketName}/${objectName}`,
+        url: `${process.env.MINIO_PUBLIC_URL || 'http://localhost:9000'}/${bucket}/${objectName}`,
       };
     } catch (err) {
       this.logger.error('Error uploading file', err);
@@ -53,14 +63,19 @@ export class MinioService {
     }
   }
 
-  async downloadAudio(objectName: string): Promise<stream.Readable> {
+  async downloadAudio(objectName: string, bucket: string): Promise<stream.Readable> {
+    if(!this.bucketNames.includes(bucket)){
+      throw new InternalServerErrorException('Invalid bucket name');
+    }
+
     try {
-        const stat = await this.minioClient.statObject(this.bucketName, objectName);
-        console.log(`Metadata for downloaded audio: `);
-        for(const key in stat.metaData) {
-            console.log(`  ${key}: ${stat.metaData[key]}`);
-        }
-      return await this.minioClient.getObject(this.bucketName, objectName);
+      //Fetching audio object - throws error if not found
+      const stat = await this.minioClient.statObject(bucket, objectName);
+      // console.log(`Metadata for downloaded audio: `);
+      // for (const key in stat.metaData) {
+      //   console.log(`  ${key}: ${stat.metaData[key]}`);
+      // }
+      return await this.minioClient.getObject(bucket, objectName);
     } catch (err) {
       this.logger.error('Error downloading file', err);
       throw new InternalServerErrorException('Failed to download file');
