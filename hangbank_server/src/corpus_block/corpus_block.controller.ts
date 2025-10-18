@@ -9,7 +9,7 @@ export class CorpusBlockController {
 
   @Post()
   create(@Body() createCorpusBlockDto: CreateCorpusBlockDto) {
-    return this.corpusBlockService.create(createCorpusBlockDto);
+    // return this.corpusBlockService.create();
   }
 
   @Get()

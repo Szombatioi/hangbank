@@ -10,7 +10,7 @@ export class Dataset {
     @Column({ nullable: false })
     corpus_minio_link: string;
 
-    @OneToOne(() => Metadata, (metadata) => metadata.dataset, { onDelete: 'CASCADE' })
+    @OneToOne(() => Metadata, (metadata) => metadata.dataset, { onDelete: 'CASCADE' }) //if we delete the dataset, delete the metadata too
     metadata: Metadata;
 
     @OneToMany(() => AudioBlock, (audioBlock) => audioBlock.dataset)

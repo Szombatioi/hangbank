@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Corpus } from "src/corpus/entities/corpus.entity";
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class CorpusBlock {
@@ -8,6 +9,6 @@ export class CorpusBlock {
     @Column({ nullable: false })
     corpus_block_minio_link: string;
 
-    @Column({ nullable: false })
-    corpus_minio_link: string;
+    @ManyToOne(() => Corpus, (corpus) => corpus.corpus_blocks)
+    corpus: Corpus;
 }

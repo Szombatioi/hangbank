@@ -1,11 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { CreateCorpusBlockDto } from './dto/create-corpus_block.dto';
 import { UpdateCorpusBlockDto } from './dto/update-corpus_block.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { CorpusBlock } from './entities/corpus_block.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class CorpusBlockService {
-  create(createCorpusBlockDto: CreateCorpusBlockDto) {
-    return 'This action adds a new corpusBlock';
+  constructor(
+    @InjectRepository(CorpusBlock) private readonly corpusBlockRepository: Repository<CorpusBlock>,
+  ) {}
+  async create(minioLink: string) {
+    return await this.corpusBlockRepository.save(this.corpusBlockRepository.create({corpus_block_minio_link: minioLink}));
   }
 
   findAll() {
