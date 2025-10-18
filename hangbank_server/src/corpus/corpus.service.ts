@@ -177,7 +177,7 @@ export class CorpusService {
     this.clearDirectory(tempDir);
 
     //Remove Corpus Blocks files from the local disk
-    this.clearDirectory(tempDir);
+    this.clearDirectory(outputDir);
   }
 
   findAll() {
