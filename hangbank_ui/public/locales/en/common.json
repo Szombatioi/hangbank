@@ -1,5 +1,8 @@
 {
     "upload_corpus": "Upload Corpus",
     "upload_file": "Upload File",
-    "start_uploading": "Start Uploading"
+    "start_uploading": "Start Uploading",
+    "my_datasets": "My Datasets",
+    "new": "New",
+    "select_a_corpus": "Select a Corpus"
 }

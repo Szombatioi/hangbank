@@ -1,5 +1,8 @@
 {
     "upload_corpus": "Korpusz feltöltése",
     "upload_file": "Fájl feltöltése",
-    "start_uploading": "Feltöltés megkezdése"
+    "start_uploading": "Feltöltés megkezdése",
+    "my_datasets": "Adathalmazaim",
+    "new": "Új",
+    "select_a_corpus": "Korpusz kiválasztása"
 }
