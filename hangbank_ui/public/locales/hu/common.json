@@ -21,5 +21,9 @@
     "recording_context": "Felvételi kontextus",
     "enter_speaker_name": "Adja meg a felolvasó nevét",
     "select_your_microphone": "Válassza ki a mikrofonját",
-    "next": "Következő"
+    "next": "Következő",
+    "project": "Projekt",
+    "overview": "Áttekintés",
+    "start": "Kezdés",
+    "block": "Blokk"
 }

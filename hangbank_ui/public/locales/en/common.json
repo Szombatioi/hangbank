@@ -21,5 +21,9 @@
     "recording_context": "Recording context",
     "enter_speaker_name": "Enter speaker name",
     "select_your_microphone": "Select your microphone",
-    "next": "Next"
+    "next": "Next",
+    "project": "Project",
+    "overview": "Overview",
+    "start": "Start",
+    "block": "Block"
 }

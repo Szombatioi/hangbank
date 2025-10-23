@@ -119,7 +119,7 @@ export class CorpusService {
     console.log('Python script finished execution');
     console.log(blockFileNames);
     //Generate CorpusBlock entities in DB for each filename the Python script returned
-    blockFileNames.forEach(async (blockFileName) => {
+    blockFileNames.forEach(async (blockFileName, index) => {
       //path of text file (block #XYZ)
       const filePath = path.join(
         __dirname,
@@ -162,6 +162,8 @@ export class CorpusService {
       console.log('Corpus Block uploaded to MinIO: ' + blockRes.filename);
 
       const corpusBlock = await this.corpusBlockRepository.create({
+        sequence: index+1,
+        filename: blockRes.filename,
         corpus_block_minio_link: blockRes.filename, //returned by MinIO upload
       });
       corpusBlock.corpus = corpus;

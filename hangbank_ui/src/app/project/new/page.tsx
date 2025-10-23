@@ -112,7 +112,12 @@ export default function NewProjectPage() {
           >
             {selectedMode === "corpus" ? (
               <>
-                <CorpusBasedFragment invokeNextStep={(val) => {setCorpusResult(val); setActive('overview');}} />
+                <CorpusBasedFragment
+                  invokeNextStep={(val) => {
+                    setCorpusResult(val);
+                    setActive("overview");
+                  }}
+                />
               </>
             ) : (
               <>
@@ -122,9 +127,62 @@ export default function NewProjectPage() {
           </motion.div>
         )}
         {active === "overview" && (
-            <>
-                
-            </>
+          <>
+            {corpusResult ? (
+              <>
+                <motion.div
+                  key="comp3"
+                  initial={{ opacity: 0, y: 50 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -50 }}
+                  transition={{ duration: 0.5 }}
+                  className="absolute"
+                >
+                  <Box m={8} sx={{ display: "flex", justifyContent: "center" }}>
+                    <Paper elevation={3} sx={{ width: "65%", padding: 4 }}>
+                      <div style={{ margin: 8 }}>
+                        {/* Result of previos (config) step */}
+                        <Typography variant="h4" align="center">
+                          {t("overview")}
+                        </Typography>
+                        <Typography>
+                          {t("project")}: {corpusResult.projectTitle}
+                        </Typography>
+                        <Typography>
+                          {t("speaker")}: {corpusResult.speaker}
+                        </Typography>{" "}
+                        {/*TODO: speaker.name or ID */}
+                        <Typography>
+                          {t("microphone")}: {corpusResult.mic}
+                        </Typography>
+                        <Typography>
+                          {t("corpus")}: {corpusResult.corpus.name}
+                        </Typography>
+                        {corpusResult.context && (
+                          <Typography>
+                            {t("recording_context")}: {corpusResult.context}
+                          </Typography>
+                        )}
+                      </div>
+                      {/* TODO: Add corpus blocks here */}
+                      {/* Button to start recording from the first non-finished block */}
+                      <div
+                        style={{
+                          margin: 8,
+                          display: "flex",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Button variant="contained">{t("start")}</Button>
+                      </div>
+                    </Paper>
+                  </Box>
+                </motion.div>
+              </>
+            ) : (
+              <>{/* TODO: Convo based results */}</>
+            )}
+          </>
         )}
       </AnimatePresence>
     </div>

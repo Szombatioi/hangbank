@@ -50,7 +50,7 @@ export default function CorpusBasedFragment({
       projectTitle.length <= 0 ||
       !selectedMic ||
       selectedMic.length <= 0 ||
-      !selectedCorpus || !speaker || speaker.length <= 0 //TODO remove this last one when Speaker has a dto instead of string
+      !selectedCorpus //|| !speaker// || speaker.length <= 0 //TODO remove this last one when Speaker has a dto instead of string
     ) {
       showMessage(t("pls_fill_all_fields"), 'error');
       return;
@@ -72,7 +72,7 @@ export default function CorpusBasedFragment({
         const devices = await navigator.mediaDevices.enumerateDevices();
         const audioInputs = devices.filter((d) => d.kind === "audioinput");
         setMics(audioInputs);
-        if (audioInputs.length > 0) setSelectedMic(audioInputs[0].deviceId);
+        if (audioInputs.length > 0) setSelectedMic(audioInputs[0].label);
       } catch (err) {
         console.error(err);
         setError("Could not access microphones.");

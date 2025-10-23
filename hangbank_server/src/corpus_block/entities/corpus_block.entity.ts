@@ -6,6 +6,12 @@ export class CorpusBlock {
     @PrimaryGeneratedColumn("uuid")
     id: string;
 
+    @Column({nullable: false})
+    sequence: number;
+
+    @Column({nullable: false})
+    filename: string;
+
     @Column({ nullable: false })
     corpus_block_minio_link: string;
 
