@@ -12,6 +12,11 @@ export class CorpusBlockController {
     // return this.corpusBlockService.create();
   }
 
+  // @Get('corpus/:id')
+  // async findForCorpus(@Param('id') id: string){
+  //   return this.corpusBlockService.findForCorpus(id);
+  // }
+
   @Get()
   findAll() {
     return this.corpusBlockService.findAll();

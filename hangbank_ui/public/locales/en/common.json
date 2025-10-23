@@ -25,5 +25,11 @@
     "project": "Project",
     "overview": "Overview",
     "start": "Start",
-    "block": "Block"
+    "block": "Block",
+    "internal_error": "Internal error",
+    "corpus_blocks_retrieve_error": "Could not retrieve corpus blocks",
+    "block_is_recorded": "Corpus block is recorded",
+    "block_is_todo": "Corpus block is yet to be recorded",
+    "block_has_warnings": "Corpus block contains errors",
+    "save": "Save"
 }

@@ -25,5 +25,11 @@
     "project": "Projekt",
     "overview": "Áttekintés",
     "start": "Kezdés",
-    "block": "Blokk"
+    "block": "Blokk",
+    "internal_error": "Szerverhiba",
+    "corpus_blocks_retrieve_error": "Nem sikerült lekérdezni a Korpusz blokkjait",
+    "block_is_recorded": "A blokk rögzítve van",
+    "block_is_todo": "A blokk rögzítésre vár",
+    "block_has_warnings": "A blokk hibákat tartalmaz",
+    "save": "Save"
 }

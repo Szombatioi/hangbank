@@ -10,7 +10,7 @@ import {
   WarningAmber,
   WarningOutlined,
 } from "@mui/icons-material";
-import { Icon, IconButton, Paper, Typography } from "@mui/material";
+import { Icon, IconButton, Paper, Tooltip, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 
 export interface CorpusBlockCardProps {
@@ -31,6 +31,10 @@ export default function CorpusBlockCard({
   status,
 }: CorpusBlockCardProps) {
   const { t } = useTranslation("common");
+  const filename_display =
+    filename.length > 10
+      ? filename.slice(0, 7) + "..." + filename.slice(-10)
+      : filename;
   return (
     <>
       {/* Design: 
@@ -55,13 +59,13 @@ export default function CorpusBlockCard({
           }}
         >
           <div style={{ margin: 4 }}>
-            <Typography>
+            <Typography variant="h5">
               {t("block")}
               {sequence}
             </Typography>
           </div>
           <div style={{ margin: 4 }}>
-            <Typography>{filename}</Typography>
+            <Typography>{filename_display}</Typography>
           </div>
         </div>
 
@@ -77,15 +81,22 @@ export default function CorpusBlockCard({
           <Icon sx={{ m: 1 }}>
             {status == CorpusBlockStatus.done ? (
               <>
-                <CheckCircle htmlColor="#067809" />
+                <Tooltip title={t("block_is_recorded")}>
+                  <CheckCircle htmlColor="#067809" />
+                </Tooltip>
               </>
             ) : status == CorpusBlockStatus.todo ? (
               <>
-                <AccessTimeFilled htmlColor="#CA0000" />
+                <Tooltip title={t("block_is_todo")}>
+                  <AccessTimeFilled htmlColor="#CA0000" />
+                </Tooltip>
               </>
             ) : (
               <>
-                <Warning htmlColor="#F6BE00" /> {/*Warning*/}
+                <Tooltip title={t("block_has_warnings")}>
+                  {/*Warning*/}
+                  <Warning htmlColor="#F6BE00" /> 
+                </Tooltip>
               </>
             )}
           </Icon>

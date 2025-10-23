@@ -56,31 +56,38 @@ export default function CorpusBasedFragment({
       return;
     }
 
-    invokeNextStep({ projectTitle: projectTitle, speaker: speaker, mic: selectedMic, corpus: selectedCorpus, context: context });
+
+    const selectedMicName = mics.find((m) => m.deviceId === selectedMic)!.label;
+    invokeNextStep({ projectTitle: projectTitle, speaker: speaker, mic: selectedMicName, corpus: selectedCorpus, context: context });
   };
 
   //For dialog
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    // Request mic permissions first
     async function getMicrophones() {
       try {
-        // Must ask for permission before enumerateDevices returns full info
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-
+        // Check permission status first
+        const permission = await navigator.permissions.query({ name: "microphone" as PermissionName });
+        if (permission.state === "denied") {
+          setError("Microphone permission denied.");
+          return;
+        }
+  
+        // Enumerate devices (this may require user to allow mic once in the browser)
         const devices = await navigator.mediaDevices.enumerateDevices();
         const audioInputs = devices.filter((d) => d.kind === "audioinput");
         setMics(audioInputs);
-        if (audioInputs.length > 0) setSelectedMic(audioInputs[0].label);
+        if (audioInputs.length > 0) setSelectedMic(audioInputs[0].deviceId);
       } catch (err) {
         console.error(err);
         setError("Could not access microphones.");
       }
     }
-
+  
     getMicrophones();
   }, []);
+
   return (
     <>
       <Box p={4} sx={{ display: "flex", justifyContent: "center" }}>
@@ -133,7 +140,7 @@ export default function CorpusBasedFragment({
                 fullWidth
                 onChange={(e) => setSelectedMic(e.target.value)}
               >
-                <MenuItem value="" selected disabled>
+                <MenuItem value="" disabled>
                   {t("select_your_microphone")}
                 </MenuItem>
                 {mics.map((mic) => (

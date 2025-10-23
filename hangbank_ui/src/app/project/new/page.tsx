@@ -1,6 +1,6 @@
 "use client";
 import SelectCorpusDialog from "@/app/components/dialogs/select_corpus_dialog";
-import { AutoStories, Search, SmartToy } from "@mui/icons-material";
+import { AutoStories, Mic, Save, Search, SmartToy, Start } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -17,8 +17,27 @@ import { t } from "i18next";
 import { useEffect, useState } from "react";
 import CorpusBasedFragment from "./corpus_based_fragment";
 import ConvoBasedFragment from "./convo_based_fragment";
+import CorpusBlockCard, {
+  CorpusBlockStatus,
+} from "@/app/components/corpus_block_card";
+import api from "@/app/axios";
+import { Severity, useSnackbar } from "@/app/contexts/SnackbarProvider";
 
 //TODO: add values to Textfields
+
+interface CorpusResultType {
+  projectTitle: string;
+  speaker: string;
+  mic: string;
+  corpus: { id: string; name: string };
+  context?: string;
+}
+
+interface CorpusBlockType {
+  sequence: number;
+  filename: string;
+  status: CorpusBlockStatus;
+}
 
 export default function NewProjectPage() {
   const contentIdentifiers = ["types", "config", "overview"];
@@ -29,14 +48,38 @@ export default function NewProjectPage() {
     null
   );
 
+  const { showMessage } = useSnackbar();
+
+  const corpusBasedFinished = async (val: CorpusResultType) => {
+    
+    
+    if (!val) {
+      showMessage(t("internal_error"), Severity.error);
+      return;
+    }
+    setCorpusResult(val);
+    //Retrieve corpus blocks
+    const cblocks = await api.get<CorpusBlockType[]>(
+      `/corpus/${val.corpus.id}/blocks`
+    );
+
+    if (!cblocks.status.toString().startsWith("2")) {
+      showMessage(t("corpus_blocks_retrieve_error"), Severity.error);
+      return;
+    }
+    const blocks = cblocks.data.sort((a,b) => a.sequence - b.sequence);
+    setCorpusBlocks(blocks);
+
+    setActive("overview");
+  };
+
   //Result of 2nd config step of Mode 1 (Corpus based)
-  const [corpusResult, setCorpusResult] = useState<{
-    projectTitle: string;
-    speaker: string;
-    mic: string;
-    corpus: { id: string; name: string };
-    context?: string;
-  } | null>(null);
+  const [corpusResult, setCorpusResult] = useState<CorpusResultType | null>(
+    null
+  );
+  const [corpusBlocks, setCorpusBlocks] = useState<
+    CorpusBlockType[]
+  >([]);
 
   return (
     <div className="relative w-full flex justify-center items-center">
@@ -114,8 +157,7 @@ export default function NewProjectPage() {
               <>
                 <CorpusBasedFragment
                   invokeNextStep={(val) => {
-                    setCorpusResult(val);
-                    setActive("overview");
+                    corpusBasedFinished(val);
                   }}
                 />
               </>
@@ -164,17 +206,31 @@ export default function NewProjectPage() {
                           </Typography>
                         )}
                       </div>
-                      {/* TODO: Add corpus blocks here */}
                       {/* Button to start recording from the first non-finished block */}
                       <div
                         style={{
-                          margin: 8,
+                          margin: 12,
                           display: "flex",
                           justifyContent: "center",
+                          gap: 4
                         }}
                       >
-                        <Button variant="contained">{t("start")}</Button>
+                        <Button variant="contained" endIcon={<Mic />}>{t("start")}</Button>
+                        <Button variant="contained" endIcon={<Save />}>{t("save")}</Button>
                       </div>
+
+                      {/* TODO: Add corpus blocks here */}
+                      <Grid container spacing={2}>
+                        {corpusBlocks.map((block, index) => (
+                          <Grid size={4} key={index}>
+                            <CorpusBlockCard
+                              sequence={block.sequence}
+                              filename={block.filename}
+                              status={block.status}
+                            />
+                          </Grid>
+                        ))}
+                      </Grid>
                     </Paper>
                   </Box>
                 </motion.div>

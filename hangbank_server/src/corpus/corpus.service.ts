@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateCorpusDto } from './dto/create-corpus.dto';
 import { UpdateCorpusDto } from './dto/update-corpus.dto';
 import { MinioService } from 'src/minio/minio.service';
@@ -13,6 +13,7 @@ import * as fs from 'fs';
 import { lookup as mimeLookup } from 'mime-types';
 import { Readable } from 'stream';
 import { FileCorpusService } from './corpus_splitter.service';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Injectable()
 export class CorpusService {
@@ -201,6 +202,21 @@ export class CorpusService {
 
     return corporaWithCounts;
     
+  }
+
+  async findBlocks(id: string){
+    const corpus = await this.corpusRepository.findOne({where: {id}, relations: {corpus_blocks: true}});
+    if(!corpus){
+      throw new NotFoundException();
+    }
+
+    const blocks_formatted = corpus.corpus_blocks.map(block => ({
+      sequence: block.sequence,
+      filename: block.filename,
+      status: block.status
+    }));
+    
+    return blocks_formatted;
   }
 
   findOne(id: number) {

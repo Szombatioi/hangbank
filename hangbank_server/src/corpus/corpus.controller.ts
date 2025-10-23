@@ -19,6 +19,11 @@ export class CorpusController {
     return this.corpusService.findAll();
   }
 
+  @Get(':id/blocks')
+  async findBlocks(@Param('id') id: string){
+    return await this.corpusService.findBlocks(id);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.corpusService.findOne(+id);

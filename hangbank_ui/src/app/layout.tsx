@@ -24,10 +24,10 @@ const geistMono = Geist_Mono({
 
 const theme = createTheme({
   palette: {
-    // background:{
-    //   default: "#c8c2ae"
+    background:{
+       default: "#fff0db"
     //   paper: "#1F0812"
-    // },
+    },
     // primary: {
     //   main: "#746D75", // default blue
     // },
