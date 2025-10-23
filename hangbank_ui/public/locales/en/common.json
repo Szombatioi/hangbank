@@ -4,5 +4,20 @@
     "start_uploading": "Start Uploading",
     "my_datasets": "My Datasets",
     "new": "New",
-    "select_a_corpus": "Select a Corpus"
+    "select_a_corpus": "Select a Corpus",
+    "name": "Name",
+    "language": "Language",
+    "type": "Type",
+    "pls_upload_file": "Please upload a file!",
+    "pls_fill_all_fields": "Please fill all required fields!",
+    "total_blocks": "Total blocks",
+    "config_your_project": "Configure your project",
+    "opt_enter_context": "Optionally, you can describe your recording context (e.g. recording outside, or in a studio, with no background noise etc.)",
+    "enter_title": "Enter a title",
+    "title": "Title",
+    "speaker": "Speaker",
+    "microphone": "Microphone",
+    "corpus": "Corpus",
+    "recording_context": "Recording context",
+    "enter_speaker_name": "Enter speaker name"
 }

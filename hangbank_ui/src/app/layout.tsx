@@ -5,6 +5,7 @@ import "./globals.css";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { CssBaseline } from "@mui/material";
 import { LanguageProvider } from "./contexts/LanguageContext";
+import { SnackbarProvider } from "./contexts/SnackbarProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -50,7 +51,9 @@ export default function RootLayout({
         <ThemeProvider theme={theme}>
           <CssBaseline />
           <LanguageProvider>
-            {children}
+            <SnackbarProvider>
+              {children}
+            </SnackbarProvider>
           </LanguageProvider>
         </ThemeProvider>
       </body>

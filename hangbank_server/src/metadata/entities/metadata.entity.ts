@@ -9,8 +9,8 @@ export class Metadata {
     @Column()
     microphone: string;
 
-    @Column()
-    language: string; //TODO: make it a table?
+    // @Column()
+    // language: string; //TODO: make it a table?
 
     @Column()
     recording_context: string;

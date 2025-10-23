@@ -10,8 +10,8 @@ export class CorpusController {
 
   @Post("upload")
   @UseInterceptors(FileInterceptor('file'))
-  create(@UploadedFile() file: Express.Multer.File) {
-;    return this.corpusService.create(file);
+  create(@Body() dto: CreateCorpusDto, @UploadedFile() file: Express.Multer.File) {
+;    return this.corpusService.create(dto, file);
   }
 
   @Get()

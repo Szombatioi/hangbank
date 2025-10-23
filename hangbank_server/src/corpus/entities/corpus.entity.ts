@@ -7,6 +7,15 @@ export class Corpus {
     @PrimaryGeneratedColumn("uuid")
     id: string;
 
+    @Column({nullable: false})
+    name: string;
+
+    @Column()
+    language: string; //HU, EN etc.
+
+    @Column({nullable: true})
+    category: string; //e.g. News reading, Storytelling etc. -> but this is not mandatory
+
     @Column({ nullable: false })
     corpus_minio_link: string;
 

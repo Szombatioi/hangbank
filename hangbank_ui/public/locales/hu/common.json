@@ -4,5 +4,20 @@
     "start_uploading": "Feltöltés megkezdése",
     "my_datasets": "Adathalmazaim",
     "new": "Új",
-    "select_a_corpus": "Korpusz kiválasztása"
+    "select_a_corpus": "Korpusz kiválasztása",
+    "name": "Név",
+    "language": "Nyelv",
+    "type": "Típus",
+    "pls_upload_file": "Kérem töltsön fel egy fájlt!",
+    "pls_fill_all_fields": "Kérem töltse ki az összes kötelező mezőt!",
+    "total_blocks": "Összes blokk",
+    "config_your_project": "Konfigurálja be a projektjét",
+    "opt_enter_context": "Opcionálisan leírhatja, milyen körülmények között történt a hangfelvétel (pl. kültéren vagy stúdióban, háttérzaj nélkül stb.)",
+    "enter_title": "Adja meg a címet",
+    "title": "Cím",
+    "speaker": "Felolvasó",
+    "microphone": "Mikrofon",
+    "corpus": "Korpusz",
+    "recording_context": "Felvételi kontextus",
+    "enter_speaker_name": "Adja meg a felolvasó nevét"
 }

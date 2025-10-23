@@ -1,1 +1,5 @@
-export class CreateCorpusDto {}
+export class CreateCorpusDto {
+    name: string;
+    language: string;
+    category?: string;
+}

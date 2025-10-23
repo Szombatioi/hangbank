@@ -104,7 +104,7 @@ export class FileCorpusService {
     if (ext === '.txt') text = await this.extractTextFromTxt(filePath);
     else if (ext === '.docx') text = await this.extractTextFromDocx(filePath);
     // else if (ext === '.pdf')
-    //   text = (await this.extractTextFromPdf(filePath)).join(' ');
+    //   text = (await this.extractTextFromPdf(filePath)).join(' ');f
     else
       throw new Error(
         'Unsupported file format. Please use .txt, .docx, or .pdf',

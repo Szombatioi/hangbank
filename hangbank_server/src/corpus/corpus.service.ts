@@ -25,7 +25,7 @@ export class CorpusService {
     @InjectRepository(Corpus)
     private readonly corpusRepository: Repository<Corpus>,
   ) {}
-  async create(file: Express.Multer.File) {
+  async create(dto: CreateCorpusDto, file: Express.Multer.File) {
     //Step 1. Uploading Corpus to MinIO
     const result = await this.minioService.uploadAudio(file, 'corpus');
 
@@ -33,6 +33,9 @@ export class CorpusService {
 
     //Generate Corpus entity in DB
     const corpus = this.corpusRepository.create({
+      name: dto.name,
+      language: dto.language,
+      category: dto.category,
       corpus_minio_link: result.filename,
     });
 
@@ -127,8 +130,14 @@ export class CorpusService {
         'output',
         blockFileName,
       );
+      console.log("Start file load into buffer");
       const fileBuffer = fs.readFileSync(filePath);
+
+      console.log("File read into Buffer");
+
       const mimetype = mimeLookup(filePath) || 'application/octet-stream';
+
+      console.log("Block mime checked");
 
       //Creating a fake Multer file object to use MinIO upload function
       const fakeMulterFile: Express.Multer.File = {
@@ -144,6 +153,7 @@ export class CorpusService {
         path: filePath,
       };
 
+      console.log("Starting block upload to MinIO");
       //Upload Corpus Block to MinIO to the 'corpus-blocks' bucket
       var blockRes = await this.minioService.uploadAudio(
         fakeMulterFile,
@@ -181,7 +191,14 @@ export class CorpusService {
   }
 
   async findAll() {
-    return await this.corpusRepository.find();
+    const res = await this.corpusRepository.find({relations: {corpus_blocks: true}});
+    const corporaWithCounts = res.map(corpus => ({
+      ...corpus,
+      total_blocks: corpus.corpus_blocks?.length ?? 0,
+    }));
+
+    return corporaWithCounts;
+    
   }
 
   findOne(id: number) {

@@ -3,12 +3,15 @@ import SelectCorpusDialog from '@/app/components/dialogs/select_corpus_dialog';
 import { AutoStories, Search, SmartToy } from '@mui/icons-material';
 import { Box, Button, Grid, IconButton, MenuItem, Paper, Select, TextField, Typography } from '@mui/material';
 import { AnimatePresence, motion } from 'framer-motion';
+import { t } from 'i18next';
 import { useEffect, useState } from 'react';
 
+//TODO: add values to Textfields
 
 export default function NewProjectPage() {
     const contentIdentifiers = ['types', 'config', 'overview'];
     const [active, setActive] = useState<'types' | 'config' | 'overview'>('types');
+    const [selectedCorpus, setSelectedCorpus] = useState<{id: string, name: string} | null>(null);
 
     //For dialog
     const [open, setOpen] = useState(false);
@@ -26,7 +29,6 @@ export default function NewProjectPage() {
 
     const [mics, setMics] = useState<MediaDeviceInfo[]>([]);
     const [error, setError] = useState<string | null>(null);
-    const [chosenCorpus, setChosenCorpus] = useState<string>("Sample Corpus 1"); // TODO: type
 
     useEffect(() => {
         // Request mic permissions first
@@ -84,35 +86,36 @@ export default function NewProjectPage() {
                         transition={{ duration: 0.5 }}
                         className="absolute"
                     >
-
                         <Box p={4} sx={{ display: 'flex', justifyContent: 'center' }}>
                             <Paper sx={{ width: "65%", padding: 4 }}>
+                                <Typography sx={{paddingBottom: 4}} variant='h4' align='center'>{t("config_your_project")}</Typography>
                                 <Grid container spacing={2}>
                                     <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
-                                        <Typography sx={{ width: 200, fontWeight: 500 }}>Title:</Typography>
+                                        <Typography sx={{ width: 200, fontWeight: 500 }}>{t("title")}:</Typography>
                                     </Grid>
                                     <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
                                         <TextField
                                             variant="outlined"
                                             size="small"
                                             fullWidth
-                                            placeholder="Enter title"
+                                            placeholder={t("enter_title")}
+                                            required
                                         />
                                     </Grid>
                                     <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
-                                        <Typography sx={{ width: 200, fontWeight: 500 }}>Speaker:</Typography>
+                                        <Typography sx={{ width: 200, fontWeight: 500 }}>{t("speaker")}:</Typography>
                                     </Grid>
                                     <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
                                         <TextField
                                             variant="outlined"
                                             size="small"
                                             fullWidth
-                                            placeholder="Enter speaker name"
+                                            placeholder={t("enter_speaker_name")}
                                             disabled
                                         />
                                     </Grid>
                                     <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
-                                        <Typography sx={{ width: 200, fontWeight: 500 }}>Microphone:</Typography>
+                                        <Typography sx={{ width: 200, fontWeight: 500 }}>{t("microphone")}:</Typography>
                                     </Grid>
                                     <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
                                         <Select defaultValue={mics.length > 0 ? mics[0].deviceId : ''} fullWidth>
@@ -124,13 +127,13 @@ export default function NewProjectPage() {
                                         </Select>
                                     </Grid>
 
-                                    {/* TODO: only if we chose Nr. 1 */}
+                                    {/* TODO: only if we chose project type Nr. 1 */}
                                     {/* Corpus */}
                                     <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
-                                        <Typography sx={{ width: 200, fontWeight: 500 }}>Corpus: </Typography>
+                                        <Typography sx={{ width: 200, fontWeight: 500 }}>{t("corpus")}: </Typography>
                                     </Grid>
                                     <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
-                                        <TextField disabled fullWidth value={chosenCorpus} />
+                                        <TextField disabled fullWidth value={selectedCorpus?.name ?? t("select_a_corpus")} />
                                         <IconButton onClick={() => { setOpen(true) }} color='primary'>
                                             <Search />
                                         </IconButton>
@@ -138,16 +141,16 @@ export default function NewProjectPage() {
 
                                     {/* Context */}
                                     <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
-                                        <Typography sx={{ width: 200, fontWeight: 500 }}>Recording context:</Typography>
+                                        <Typography sx={{ width: 200, fontWeight: 500 }}>{t("recording_context")}:</Typography>
                                     </Grid>
                                     <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
-                                        <TextField multiline rows={5} fullWidth />
+                                        <TextField multiline rows={5} fullWidth placeholder={t("opt_enter_context")} />
                                     </Grid>
                                 </Grid>
                             </Paper>
                         </Box>
 
-                        <SelectCorpusDialog open={open} onClose={() => setOpen(false)} />
+                        <SelectCorpusDialog onSelect={(val) => {setSelectedCorpus(val)}} open={open} onClose={() => setOpen(false)} />
                     </motion.div>
                 )}
             </AnimatePresence>

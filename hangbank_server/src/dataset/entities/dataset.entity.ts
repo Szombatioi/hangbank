@@ -8,6 +8,9 @@ export class Dataset {
     @PrimaryGeneratedColumn("uuid")
     id: string;
 
+    @Column({nullable: false})
+    name: string;
+
     // @Column({ nullable: false })
     // corpus_minio_link: string;
 

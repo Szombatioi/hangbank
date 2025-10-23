@@ -1,18 +1,32 @@
 "use client";
 import { Dialog, DialogContent, DialogTitle, Grid, IconButton, Typography } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import CorpusCard from "../corpus_card";
 import { Close } from "@mui/icons-material";
+import api from "@/app/axios";
+import CorpusHeaderDto from "@/app/dto/corpus_header";
 
 interface SelectCorpusDialogProps {
     open: boolean;
     onClose: () => void;
+    onSelect: (value: {id: string, name: string}) => void;
 }
 
-export default function SelectCorpusDialog({ open, onClose }: SelectCorpusDialogProps) {
+export default function SelectCorpusDialog({ open, onClose, onSelect }: SelectCorpusDialogProps) {
     const { t } = useTranslation("common");
-    const [corpora, setCorpora] = useState<string[]>(["Sample Corpus 1", "Sample Corpus 2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",]); // TODO: type and API call
+    const [corpora, setCorpora] = useState<CorpusHeaderDto[]>([]); // TODO: type and API call
+
+    useEffect(() => {
+        async function fetchCorpora(){
+            const corpora_res = await api.get<CorpusHeaderDto[]>("/corpus");
+            console.log(corpora_res.data);
+            setCorpora(corpora_res.data);
+        }
+
+        fetchCorpora();
+    }, [])
+
     return (
         <Dialog open={open} onClose={onClose} fullWidth maxWidth="md" PaperProps={
             {
@@ -32,12 +46,12 @@ export default function SelectCorpusDialog({ open, onClose }: SelectCorpusDialog
             })}>
                 <Close />
             </IconButton>
-            <DialogTitle><Typography variant="h4" align="center">{t("select_a_corpus")}</Typography></DialogTitle>
+            <DialogTitle><Typography variant="h4" component="div" align="center">{t("select_a_corpus")}</Typography></DialogTitle>
             <DialogContent>
                 <Grid container spacing={2}>
                     {corpora.map((corpus, index) => (
                         <Grid key={index} size={3}>
-                            <CorpusCard />
+                            <CorpusCard onSelect={(val) => {onSelect(val); onClose()}} id={corpus.id} name={corpus.name} language={corpus.language} total_blocks={corpus.total_blocks} />
                         </Grid>
                     ))
                     }
