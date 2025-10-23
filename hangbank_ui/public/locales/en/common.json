@@ -19,5 +19,7 @@
     "microphone": "Microphone",
     "corpus": "Corpus",
     "recording_context": "Recording context",
-    "enter_speaker_name": "Enter speaker name"
+    "enter_speaker_name": "Enter speaker name",
+    "select_your_microphone": "Select your microphone",
+    "next": "Next"
 }

@@ -1,159 +1,132 @@
 "use client";
-import SelectCorpusDialog from '@/app/components/dialogs/select_corpus_dialog';
-import { AutoStories, Search, SmartToy } from '@mui/icons-material';
-import { Box, Button, Grid, IconButton, MenuItem, Paper, Select, TextField, Typography } from '@mui/material';
-import { AnimatePresence, motion } from 'framer-motion';
-import { t } from 'i18next';
-import { useEffect, useState } from 'react';
+import SelectCorpusDialog from "@/app/components/dialogs/select_corpus_dialog";
+import { AutoStories, Search, SmartToy } from "@mui/icons-material";
+import {
+  Box,
+  Button,
+  Grid,
+  IconButton,
+  MenuItem,
+  Paper,
+  Select,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { AnimatePresence, motion } from "framer-motion";
+import { t } from "i18next";
+import { useEffect, useState } from "react";
+import CorpusBasedFragment from "./corpus_based_fragment";
+import ConvoBasedFragment from "./convo_based_fragment";
 
 //TODO: add values to Textfields
 
 export default function NewProjectPage() {
-    const contentIdentifiers = ['types', 'config', 'overview'];
-    const [active, setActive] = useState<'types' | 'config' | 'overview'>('types');
-    const [selectedCorpus, setSelectedCorpus] = useState<{id: string, name: string} | null>(null);
+  const contentIdentifiers = ["types", "config", "overview"];
+  const [active, setActive] = useState<"types" | "config" | "overview">(
+    "types"
+  );
+  const [selectedMode, setSelectedMode] = useState<"corpus" | "convo" | null>(
+    null
+  );
 
-    //For dialog
-    const [open, setOpen] = useState(false);
+  //Result of 2nd config step of Mode 1 (Corpus based)
+  const [corpusResult, setCorpusResult] = useState<{
+    projectTitle: string;
+    speaker: string;
+    mic: string;
+    corpus: { id: string; name: string };
+    context?: string;
+  } | null>(null);
 
+  return (
+    <div className="relative w-full flex justify-center items-center">
+      <AnimatePresence mode="wait">
+        {active === "types" && (
+          <motion.div
+            initial={{ opacity: 0, y: 100 }} // Start below
+            animate={{ opacity: 1, y: 0 }} // Swim upward
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="flex flex-col items-center justify-center h-screen w-screen"
+            style={{
+              height: "100vh",
+              width: "100vw",
+            }}
+          >
+            <div
+              style={{
+                height: "100%",
+                display: "flex",
+                flexDirection: "row",
+                gap: 64,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <Button
+                onClick={() => {
+                  setSelectedMode("corpus");
+                  setActive("config");
+                }}
+                style={{
+                  border: "4px solid lightgrey",
+                  borderRadius: 8,
+                  width: 200,
+                  height: 200,
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                <AutoStories fontSize="large" />
+                Corpus based
+              </Button>
+              <Button
+                disabled //TODO enable once ready
+                onClick={() => {
+                  setSelectedMode("convo");
+                  setActive("config");
+                }}
+                style={{
+                  border: "4px solid lightgrey",
+                  borderRadius: 8,
+                  width: 200,
+                  height: 200,
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                <SmartToy fontSize="large" />
+                Conversation based
+              </Button>
+            </div>
+          </motion.div>
+        )}
 
-    const handleCorpusBasedClick = () => {
-        //set
-
-        //toggle new view
-    }
-
-    const handleConversationBasedClick = () => {
-
-    }
-
-    const [mics, setMics] = useState<MediaDeviceInfo[]>([]);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        // Request mic permissions first
-        async function getMicrophones() {
-            try {
-                // Must ask for permission before enumerateDevices returns full info
-                await navigator.mediaDevices.getUserMedia({ audio: true });
-
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const audioInputs = devices.filter((d) => d.kind === 'audioinput');
-                setMics(audioInputs);
-            } catch (err) {
-                console.error(err);
-                setError('Could not access microphones.');
-            }
-        }
-
-        getMicrophones();
-    }, []);
-
-    return (
-
-        <div className="relative w-full flex justify-center items-center">
-            <AnimatePresence mode="wait">
-                {active === 'types' && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 100 }}        // Start below
-                        animate={{ opacity: 1, y: 0 }}          // Swim upward
-                        transition={{ duration: 0.8, ease: 'easeOut' }}
-                        className="flex flex-col items-center justify-center h-screen w-screen"
-                        style={{
-                            height: '100vh',
-                            width: '100vw',
-                        }}
-                    >
-                        <div style={{ height: "100%", display: "flex", flexDirection: "row", gap: 64, justifyContent: "center", alignItems: "center" }}>
-                            <Button onClick={() => { handleCorpusBasedClick(); setActive('config') }} style={{ border: "4px solid lightgrey", borderRadius: 8, width: 200, height: 200, display: 'flex', flexDirection: 'column' }}>
-                                <AutoStories fontSize='large' />
-                                Corpus based
-                            </Button>
-                            <Button onClick={() => { handleConversationBasedClick(); setActive('config') }} style={{ border: "4px solid lightgrey", borderRadius: 8, width: 200, height: 200, display: 'flex', flexDirection: 'column' }}>
-                                <SmartToy fontSize='large' />
-                                Conversation based
-                            </Button>
-                        </div>
-                    </motion.div>
-                )}
-
-                {active === 'config' && (
-                    <motion.div
-                        key="comp2"
-                        initial={{ opacity: 0, y: 50 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -50 }}
-                        transition={{ duration: 0.5 }}
-                        className="absolute"
-                    >
-                        <Box p={4} sx={{ display: 'flex', justifyContent: 'center' }}>
-                            <Paper sx={{ width: "65%", padding: 4 }}>
-                                <Typography sx={{paddingBottom: 4}} variant='h4' align='center'>{t("config_your_project")}</Typography>
-                                <Grid container spacing={2}>
-                                    <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
-                                        <Typography sx={{ width: 200, fontWeight: 500 }}>{t("title")}:</Typography>
-                                    </Grid>
-                                    <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
-                                        <TextField
-                                            variant="outlined"
-                                            size="small"
-                                            fullWidth
-                                            placeholder={t("enter_title")}
-                                            required
-                                        />
-                                    </Grid>
-                                    <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
-                                        <Typography sx={{ width: 200, fontWeight: 500 }}>{t("speaker")}:</Typography>
-                                    </Grid>
-                                    <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
-                                        <TextField
-                                            variant="outlined"
-                                            size="small"
-                                            fullWidth
-                                            placeholder={t("enter_speaker_name")}
-                                            disabled
-                                        />
-                                    </Grid>
-                                    <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
-                                        <Typography sx={{ width: 200, fontWeight: 500 }}>{t("microphone")}:</Typography>
-                                    </Grid>
-                                    <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
-                                        <Select defaultValue={mics.length > 0 ? mics[0].deviceId : ''} fullWidth>
-                                            {mics.map((mic) => (
-                                                <MenuItem key={mic.deviceId} value={mic.deviceId}>
-                                                    {mic.label || `Microphone ${mic.deviceId}`}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </Grid>
-
-                                    {/* TODO: only if we chose project type Nr. 1 */}
-                                    {/* Corpus */}
-                                    <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
-                                        <Typography sx={{ width: 200, fontWeight: 500 }}>{t("corpus")}: </Typography>
-                                    </Grid>
-                                    <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
-                                        <TextField disabled fullWidth value={selectedCorpus?.name ?? t("select_a_corpus")} />
-                                        <IconButton onClick={() => { setOpen(true) }} color='primary'>
-                                            <Search />
-                                        </IconButton>
-                                    </Grid>
-
-                                    {/* Context */}
-                                    <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
-                                        <Typography sx={{ width: 200, fontWeight: 500 }}>{t("recording_context")}:</Typography>
-                                    </Grid>
-                                    <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
-                                        <TextField multiline rows={5} fullWidth placeholder={t("opt_enter_context")} />
-                                    </Grid>
-                                </Grid>
-                            </Paper>
-                        </Box>
-
-                        <SelectCorpusDialog onSelect={(val) => {setSelectedCorpus(val)}} open={open} onClose={() => setOpen(false)} />
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </div>
-    );
+        {active === "config" && (
+          <motion.div
+            key="comp2"
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            transition={{ duration: 0.5 }}
+            className="absolute"
+          >
+            {selectedMode === "corpus" ? (
+              <>
+                <CorpusBasedFragment invokeNextStep={(val) => {setCorpusResult(val); setActive('overview');}} />
+              </>
+            ) : (
+              <>
+                <ConvoBasedFragment />
+              </>
+            )}
+          </motion.div>
+        )}
+        {active === "overview" && (
+            <>
+                
+            </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }

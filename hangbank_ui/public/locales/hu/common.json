@@ -19,5 +19,7 @@
     "microphone": "Mikrofon",
     "corpus": "Korpusz",
     "recording_context": "Felvételi kontextus",
-    "enter_speaker_name": "Adja meg a felolvasó nevét"
+    "enter_speaker_name": "Adja meg a felolvasó nevét",
+    "select_your_microphone": "Válassza ki a mikrofonját",
+    "next": "Következő"
 }
