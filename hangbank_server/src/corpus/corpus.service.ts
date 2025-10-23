@@ -180,8 +180,8 @@ export class CorpusService {
     this.clearDirectory(outputDir);
   }
 
-  findAll() {
-    return `This action returns all corpus`;
+  async findAll() {
+    return await this.corpusRepository.find();
   }
 
   findOne(id: number) {

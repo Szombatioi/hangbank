@@ -1,4 +1,5 @@
 import { CorpusBlock } from "src/corpus_block/entities/corpus_block.entity";
+import { Dataset } from "src/dataset/entities/dataset.entity";
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
@@ -11,4 +12,8 @@ export class Corpus {
 
     @OneToMany(() => CorpusBlock, (corpusBlock) => corpusBlock.corpus, { onDelete: 'CASCADE' })
     corpus_blocks: CorpusBlock[];
+
+    //We don't need to store that which datasets use this corpus
+    // @OneToMany(() => Dataset, (dataset) => dataset.corpus)
+    // datasets: Dataset[];
 }
