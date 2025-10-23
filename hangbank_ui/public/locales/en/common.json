@@ -31,5 +31,10 @@
     "block_is_recorded": "Corpus block is recorded",
     "block_is_todo": "Corpus block is yet to be recorded",
     "block_has_warnings": "Corpus block contains errors",
-    "save": "Save"
+    "save": "Save",
+    "record_block_again": "Record block again",
+    "record_next_block": "Record next block",
+    "record_audio": "Record audio",
+    "play_recorded_audio": "Play recoreded audio",
+    "restart_recording": "Restart recording"
 }

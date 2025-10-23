@@ -31,5 +31,10 @@
     "block_is_recorded": "A blokk rögzítve van",
     "block_is_todo": "A blokk rögzítésre vár",
     "block_has_warnings": "A blokk hibákat tartalmaz",
-    "save": "Save"
+    "save": "Save",
+    "record_block_again": "Blokk rögzítése újra",
+    "record_next_block": "Következő blokk rögzítése",
+    "record_audio": "Hang felvétele",
+    "play_recorded_audio": "Felvett hang lejátszása",
+    "restart_recording": "Lejátszás újrakezdése"
 }
