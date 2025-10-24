@@ -219,8 +219,10 @@ export class CorpusService {
     return blocks_formatted;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} corpus`;
+  async findOne(id: string): Promise<Corpus> {
+    const corpus = await this.corpusRepository.findOne({where: {id}});
+    if(!corpus) throw new NotFoundException();
+    return corpus;
   }
 
   update(id: number, updateCorpusDto: UpdateCorpusDto) {

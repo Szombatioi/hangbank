@@ -11,10 +11,12 @@ export class Dataset {
     @Column({nullable: false})
     name: string;
 
+    //TODO: add Mode? (Convo based might be different...)
+
     // @Column({ nullable: false })
     // corpus_minio_link: string;
 
-    @OneToOne(() => Metadata, (metadata) => metadata.dataset, { onDelete: 'CASCADE' }) //if we delete the dataset, delete the metadata too
+    @OneToOne(() => Metadata, (metadata) => metadata.dataset, { cascade: true , onDelete: 'CASCADE'}) //if we delete the dataset, delete the metadata too
     metadata: Metadata;
 
     @OneToMany(() => AudioBlock, (audioBlock) => audioBlock.dataset)

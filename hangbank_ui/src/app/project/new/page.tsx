@@ -47,8 +47,36 @@ export default function NewProjectPage() {
   const [selectedMode, setSelectedMode] = useState<"corpus" | "convo" | null>(
     null
   );
-
+  const [saveButtonDisabled, setSaveButtonDisabled] = useState<boolean>(false);
   const { showMessage } = useSnackbar();
+
+  const saveProject = async () => {
+    //TODO: handle convoResult too!!
+
+    if(selectedMode === 'corpus'){
+      if(!corpusResult) {
+        showMessage("corpusResult error", Severity.error); //TODO show message
+        return;
+      }
+  
+      try{
+        await api.post("/dataset",{
+          projectName: corpusResult.projectTitle,
+          microphone: corpusResult.mic,
+          recordingContext: corpusResult.context,
+          speaker_ids: [corpusResult.speaker.id],
+          corpus_id: corpusResult.corpus.id
+        });
+        showMessage("project saved successfully", Severity.success); //TODO: message translation
+        setSaveButtonDisabled(true);
+      } catch(err){
+        showMessage("error", Severity.error); //TODO error message translation
+      }
+    }
+    // //---Corpus---
+    // corpus_id: string;
+    
+  }
 
   const corpusBasedFinished = async (val: CorpusResultType) => {
     
@@ -216,7 +244,7 @@ export default function NewProjectPage() {
                         }}
                       >
                         <Button variant="contained" endIcon={<Mic />}>{t("start")}</Button>
-                        <Button variant="contained" endIcon={<Save />}>{t("save")}</Button>
+                        <Button disabled={saveButtonDisabled} onClick={()=>{saveProject()}} variant="contained" endIcon={<Save />}>{t("save")}</Button>
                       </div>
 
                       {/* TODO: Add corpus blocks here */}

@@ -1,5 +1,6 @@
 import { Dataset } from "src/dataset/entities/dataset.entity";
-import { Column, CreateDateColumn, Entity, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { User } from "src/user/entities/user.entity";
+import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class Metadata {
@@ -7,12 +8,17 @@ export class Metadata {
     id: string;
 
     @Column()
-    microphone: string;
+    microphone: string; //shold we store both label and deviceID?
+
+    //One (or many) Speaker(s)
+    @ManyToMany(() => User)
+    @JoinTable()
+    speakers: User[]; //If using Mode 1, it will be a single user
 
     // @Column()
     // language: string; //TODO: make it a table?
 
-    @Column()
+    @Column({nullable: true})
     recording_context: string;
 
     @CreateDateColumn()

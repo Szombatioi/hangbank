@@ -26,7 +26,7 @@ export class CorpusController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.corpusService.findOne(+id);
+    return this.corpusService.findOne(id);
   }
 
   @Patch(':id')
