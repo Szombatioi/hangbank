@@ -36,5 +36,20 @@
     "record_next_block": "Következő blokk rögzítése",
     "record_audio": "Hang felvétele",
     "play_recorded_audio": "Felvett hang lejátszása",
-    "restart_recording": "Lejátszás újrakezdése"
+    "restart_recording": "Lejátszás újrakezdése",
+    "register": "Regisztráció",
+    "login": "Bejelentkezés",
+    "logout": "Kijelentkezés",
+    "username": "Felhasználónév",
+    "email": "Email-cím",
+    "password": "Jelszó",
+    "confirm_password": "Jelszó ismét",
+    "select_a_gender": "Válassza ki a nemét",
+    "male": "Férfi",
+    "female": "Nő",
+    "other": "Egyéb",
+    "birthdate": "Születési dátum",
+    "passwords_do_not_match": "A jelszavaknak egyeznie kell!",
+    "registration_success": "Sikeres regisztráció!",
+    "user_aready_exists": "Már létezik ez a felhasználó ezzel az email-címmel!"
 }

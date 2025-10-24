@@ -36,5 +36,20 @@
     "record_next_block": "Record next block",
     "record_audio": "Record audio",
     "play_recorded_audio": "Play recoreded audio",
-    "restart_recording": "Restart recording"
+    "restart_recording": "Restart recording",
+    "register": "Register",
+    "login": "Login",
+    "logout": "Logout",
+    "username": "Username",
+    "email": "Email",
+    "password": "Password",
+    "confirm_password": "Password again",
+    "select_a_gender": "Select a gender",
+    "male": "Male",
+    "female": "Female",
+    "other": "Other",
+    "birthdate": "Birthdate",
+    "passwords_do_not_match": "Passwords must match!",
+    "registration_success": "Registration successful!",
+    "user_aready_exists": "User already exists!"
 }

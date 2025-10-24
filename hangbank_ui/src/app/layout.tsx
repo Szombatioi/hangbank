@@ -1,11 +1,14 @@
-'use client';
+"use client";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { CssBaseline } from "@mui/material";
+import { CircularProgress, CssBaseline } from "@mui/material";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { SnackbarProvider } from "./contexts/SnackbarProvider";
+import { SessionProvider, useSession } from "next-auth/react";
+import { usePathname, useRouter } from "next/navigation";
+import { ReactNode, useEffect } from "react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,9 +27,9 @@ const geistMono = Geist_Mono({
 
 const theme = createTheme({
   palette: {
-    background:{
-       default: "#fff0db"
-    //   paper: "#1F0812"
+    background: {
+      default: "#fff0db",
+      //   paper: "#1F0812"
     },
     // primary: {
     //   main: "#746D75", // default blue
@@ -46,17 +49,42 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable}`}
-        style={{  }}
+        style={{}}
       >
         <ThemeProvider theme={theme}>
-          <CssBaseline />
-          <LanguageProvider>
-            <SnackbarProvider>
-              {children}
-            </SnackbarProvider>
-          </LanguageProvider>
+          <SessionProvider>
+            <AuthGuard>
+              <CssBaseline />
+              <LanguageProvider>
+                <SnackbarProvider>{children}</SnackbarProvider>
+              </LanguageProvider>
+            </AuthGuard>
+          </SessionProvider>
         </ThemeProvider>
       </body>
     </html>
   );
+}
+
+function AuthGuard({ children }: { children: ReactNode }) {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const pathname = usePathname();
+
+
+  useEffect(() => {
+    const isAuthPage = pathname.startsWith("/auth");
+    if (status === "unauthenticated" && !isAuthPage) {
+      router.push("/auth/login");
+    }
+  }, [status, router, pathname]);
+
+  if (status === "loading")
+    return (
+      <div style={{ textAlign: "center" }}>
+        <CircularProgress />
+      </div>
+    );
+
+  return <>{children}</>;
 }

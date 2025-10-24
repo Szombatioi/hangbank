@@ -28,4 +28,11 @@ export class User {
 
     @OneToMany(() => AudioBlock, (audioBlock) => audioBlock.user)
     audioBlocks: AudioBlock[];
+
+    //Auth elements
+    @Column({nullable: false, unique: true})
+    email: string;
+
+    @Column({nullable: false})
+    password: string;
 }
