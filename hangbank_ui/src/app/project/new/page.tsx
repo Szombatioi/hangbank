@@ -15,7 +15,7 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import { t } from "i18next";
 import { useEffect, useState } from "react";
-import CorpusBasedFragment from "./corpus_based_fragment";
+import CorpusBasedFragment, { SpeakerType } from "./corpus_based_fragment";
 import ConvoBasedFragment from "./convo_based_fragment";
 import CorpusBlockCard, {
   CorpusBlockStatus,
@@ -27,7 +27,7 @@ import { Severity, useSnackbar } from "@/app/contexts/SnackbarProvider";
 
 interface CorpusResultType {
   projectTitle: string;
-  speaker: string;
+  speaker: SpeakerType;
   mic: string;
   corpus: { id: string; name: string };
   context?: string;
@@ -191,7 +191,7 @@ export default function NewProjectPage() {
                           {t("project")}: {corpusResult.projectTitle}
                         </Typography>
                         <Typography>
-                          {t("speaker")}: {corpusResult.speaker}
+                          {t("speaker")}: {corpusResult.speaker.name}
                         </Typography>{" "}
                         {/*TODO: speaker.name or ID */}
                         <Typography>

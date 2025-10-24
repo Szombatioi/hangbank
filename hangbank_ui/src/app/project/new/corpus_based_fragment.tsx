@@ -14,6 +14,7 @@ import {
   Button,
 } from "@mui/material";
 import { t } from "i18next";
+import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -21,17 +22,23 @@ import { useTranslation } from "react-i18next";
 export interface CorpusBasedFragmentProps {
   invokeNextStep: (val: {
     projectTitle: string;
-    speaker: string;
+    speaker: SpeakerType;
     mic: string;
     corpus: { id: string; name: string };
     context?: string;
   }) => void;
 }
 
+export interface SpeakerType {
+  id: string;
+  name: string;
+}
+
 export default function CorpusBasedFragment({
   invokeNextStep,
 }: CorpusBasedFragmentProps) {
   const { t } = useTranslation("common");
+  const { data: session, status } = useSession();
   const { showMessage } = useSnackbar();
   const [mics, setMics] = useState<MediaDeviceInfo[]>([]);
   const [selectedMic, setSelectedMic] = useState<string>("");
@@ -42,7 +49,7 @@ export default function CorpusBasedFragment({
   } | null>(null);
 
   const [projectTitle, setProjectTitle] = useState<string>("");
-  const [speaker, setSpeaker] = useState<string>(""); //TODO
+  const [speaker, setSpeaker] = useState<SpeakerType | null>(null); //TODO
   const [context, setContext] = useState<string>("");
   const handleButtonClick = () => {
     if (
@@ -50,41 +57,65 @@ export default function CorpusBasedFragment({
       projectTitle.length <= 0 ||
       !selectedMic ||
       selectedMic.length <= 0 ||
-      !selectedCorpus //|| !speaker// || speaker.length <= 0 //TODO remove this last one when Speaker has a dto instead of string
+      !selectedCorpus ||
+      !speaker
     ) {
-      showMessage(t("pls_fill_all_fields"), 'error');
+      showMessage(t("pls_fill_all_fields"), "error");
       return;
     }
 
-
     const selectedMicName = mics.find((m) => m.deviceId === selectedMic)!.label;
-    invokeNextStep({ projectTitle: projectTitle, speaker: speaker, mic: selectedMicName, corpus: selectedCorpus, context: context });
+    invokeNextStep({
+      projectTitle: projectTitle,
+      speaker: speaker,
+      mic: selectedMicName,
+      corpus: selectedCorpus,
+      context: context,
+    });
   };
 
   //For dialog
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
+    //To fill Speaker input
+    async function getLoggedInUser() {
+      if (session?.user?.id && session.user.name) {
+        setSpeaker({ id: session.user.id, name: session.user.name });
+      }
+    }
+
+    getLoggedInUser();
+
     async function getMicrophones() {
       try {
         // Check permission status first
-        const permission = await navigator.permissions.query({ name: "microphone" as PermissionName });
-        if (permission.state === "denied") {
-          setError("Microphone permission denied.");
-          return;
-        }
-  
-        // Enumerate devices (this may require user to allow mic once in the browser)
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
         const devices = await navigator.mediaDevices.enumerateDevices();
         const audioInputs = devices.filter((d) => d.kind === "audioinput");
         setMics(audioInputs);
         if (audioInputs.length > 0) setSelectedMic(audioInputs[0].deviceId);
+        stream.getTracks().forEach((track) => track.stop());
+
+        // const permission = await navigator.permissions.query({ name: "microphone" as PermissionName });
+        // if (permission.state === "denied") {
+        //   setError("Microphone permission denied.");
+        //   return;
+        // }
+
+        // // Enumerate devices (this may require user to allow mic once in the browser)
+        // const devices = await navigator.mediaDevices.enumerateDevices();
+        // const audioInputs = devices.filter((d) => d.kind === "audioinput");
+        // setMics(audioInputs);
+        // if (audioInputs.length > 0) setSelectedMic(audioInputs[0].deviceId);
       } catch (err) {
         console.error(err);
         setError("Could not access microphones.");
       }
     }
-  
+
     getMicrophones();
   }, []);
 
@@ -126,7 +157,7 @@ export default function CorpusBasedFragment({
                 fullWidth
                 placeholder={t("enter_speaker_name")}
                 disabled
-                value={speaker}
+                value={speaker ? speaker.name+" (You)" : ""}
               />
             </Grid>
             <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
