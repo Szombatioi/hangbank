@@ -1,5 +1,6 @@
 export class CreateDatasetDto {
     projectName: string;
+    creator_id: string;
 
     //---Metadata---
     microphone: string;

@@ -51,5 +51,8 @@
     "birthdate": "Birthdate",
     "passwords_do_not_match": "Passwords must match!",
     "registration_success": "Registration successful!",
-    "user_aready_exists": "User already exists!"
+    "user_aready_exists": "User already exists!",
+    "could_not_load_datasets": "Could not load datasets",
+    "project_saved": "Project saved successfully",
+    "resume_from_this_block": "Resume recording from this block"
 }

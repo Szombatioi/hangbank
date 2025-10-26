@@ -65,7 +65,9 @@ export default function CorpusBlockCard({
             </Typography>
           </div>
           <div style={{ margin: 4 }}>
+            <Tooltip title={filename}>
             <Typography>{filename_display}</Typography>
+            </Tooltip>
           </div>
         </div>
 
@@ -100,9 +102,11 @@ export default function CorpusBlockCard({
               </>
             )}
           </Icon>
+          <Tooltip title={t("resume_from_this_block")}>
           <IconButton sx={{}}>
             <PlayArrow fontSize="large" htmlColor="#00BB00" />
           </IconButton>
+          </Tooltip>
         </div>
       </Paper>
     </>

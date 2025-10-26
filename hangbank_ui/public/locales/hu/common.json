@@ -51,5 +51,8 @@
     "birthdate": "Születési dátum",
     "passwords_do_not_match": "A jelszavaknak egyeznie kell!",
     "registration_success": "Sikeres regisztráció!",
-    "user_aready_exists": "Már létezik ez a felhasználó ezzel az email-címmel!"
+    "user_aready_exists": "Már létezik ez a felhasználó ezzel az email-címmel!",
+    "could_not_load_datasets": "Nem sikerült betölteni az adathalmazokat",
+    "project_saved": "Projekt sikeresen elmentve",
+    "resume_from_this_block": "Felvétel folytatása ettől a blokktól"
 }

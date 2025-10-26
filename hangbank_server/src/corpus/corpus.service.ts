@@ -119,8 +119,9 @@ export class CorpusService {
     // });
     console.log('Python script finished execution');
     console.log(blockFileNames);
+    await this.corpusRepository.save(corpus);
     //Generate CorpusBlock entities in DB for each filename the Python script returned
-    blockFileNames.forEach(async (blockFileName, index) => {
+    await blockFileNames.forEach(async (blockFileName, index) => {
       //path of text file (block #XYZ)
       const filePath = path.join(
         __dirname,

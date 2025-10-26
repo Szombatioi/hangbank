@@ -3,11 +3,14 @@
 import { Box, Button, Divider, Grid, MenuItem, Paper, Select, TextField, Typography } from "@mui/material";
 import { t } from "i18next";
 import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const router = useRouter();
 
   const handleLogin = async () => {
     const res = await signIn("credentials", {
@@ -94,7 +97,7 @@ export default function LoginPage() {
           {/* Register Button */}
           <Grid
             size={12}
-            sx={{ display: "flex", justifyContent: "center", mt: 2 }}
+            sx={{ display: "flex", justifyContent: "center", mt: 2, flexDirection: "column" }}
           >
             <Button
               variant="contained"
@@ -103,6 +106,7 @@ export default function LoginPage() {
             >
               {t("login")}
             </Button>
+            <Button onClick={()=>router.push("/auth/register")}>{t("register")}</Button>
           </Grid>
         </Grid>
       </Paper>

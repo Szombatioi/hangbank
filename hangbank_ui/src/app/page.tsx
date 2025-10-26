@@ -38,6 +38,16 @@ export default function Home() {
           Create new project example
         </Button>
       </div>
+      <div>
+        <Button
+          variant="contained"
+          onClick={() => {
+            router.push("/my_datasets");
+          }}
+        >
+          View my datasets
+        </Button>
+      </div>
       {blocks.map((block, i) => (
         <CorpusBlockCard key={i} sequence={block.s} filename={block.f} status={block.status} />
       ))}

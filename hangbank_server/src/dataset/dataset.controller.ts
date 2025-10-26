@@ -9,6 +9,7 @@ export class DatasetController {
 
   @Post()
   create(@Body() createDatasetDto: CreateDatasetDto) {
+    console.log("Called dataset post");
     return this.datasetService.create(createDatasetDto);
   }
 
@@ -19,7 +20,12 @@ export class DatasetController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.datasetService.findOne(+id);
+    return this.datasetService.findOne(id);
+  }
+
+  @Get('user/:id')
+  async findForUser(@Param('id') id: string){
+    return this.datasetService.findForUser(id);
   }
 
   @Patch(':id')
