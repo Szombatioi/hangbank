@@ -3,12 +3,13 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { CircularProgress, CssBaseline } from "@mui/material";
+import { Button, CircularProgress, CssBaseline } from "@mui/material";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { SnackbarProvider } from "./contexts/SnackbarProvider";
 import { SessionProvider, useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect } from "react";
+import { signOut } from "next-auth/react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -56,7 +57,9 @@ export default function RootLayout({
             <AuthGuard>
               <CssBaseline />
               <LanguageProvider>
-                <SnackbarProvider>{children}</SnackbarProvider>
+                <SnackbarProvider>
+                  {children}
+                </SnackbarProvider>
               </LanguageProvider>
             </AuthGuard>
           </SessionProvider>
@@ -86,5 +89,8 @@ function AuthGuard({ children }: { children: ReactNode }) {
       </div>
     );
 
-  return <>{children}</>;
+  return <>
+  {session && <Button onClick={() => {signOut({callbackUrl: "/"})}}>Sign out</Button>}
+  {children}
+  </>;
 }

@@ -12,8 +12,7 @@ import { useEffect, useState } from "react";
 
 export interface DatasetType {
   projectTitle: string;
-  speaker: SpeakerType; //TODO: array in future?
-  mic: string;
+  speakers: SpeakerType[];
   corpus: CorpusHeaderType;
   context?: string;
   corpusBlocks: CorpusBlockType[];
@@ -26,6 +25,7 @@ export default function OverviewPage() {
     async function fetchDataset(){
         try{
             const dataset_res = await api.get<DatasetType>(`/dataset/${params.id}`);
+            console.log(dataset_res.data);
             setDataset(dataset_res.data);
         }catch(err){
             //TODO show message
@@ -49,8 +49,7 @@ export default function OverviewPage() {
             <>
               <ProjectOverview
                 projectTitle={dataset.projectTitle}
-                speaker={dataset.speaker}
-                mic={dataset.mic}
+                speakers={dataset.speakers}
                 corpus={dataset.corpus}
                 context={dataset.context}
                 corpusBlocks={dataset.corpusBlocks}

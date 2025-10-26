@@ -30,8 +30,8 @@ export interface CorpusBasedFragmentProps {
 }
 
 export interface SpeakerType {
-  id: string;
-  name: string;
+  user: { id: string, name: string };
+  mic: {deviceId: string, deviceLabel: string};
 }
 
 export default function CorpusBasedFragment({
@@ -78,15 +78,6 @@ export default function CorpusBasedFragment({
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    //To fill Speaker input
-    async function getLoggedInUser() {
-      if (session?.user?.id && session.user.name) {
-        setSpeaker({ id: session.user.id, name: session.user.name });
-      }
-    }
-
-    getLoggedInUser();
-
     async function getMicrophones() {
       try {
         // Check permission status first
@@ -96,8 +87,17 @@ export default function CorpusBasedFragment({
         const devices = await navigator.mediaDevices.enumerateDevices();
         const audioInputs = devices.filter((d) => d.kind === "audioinput");
         setMics(audioInputs);
-        if (audioInputs.length > 0) setSelectedMic(audioInputs[0].deviceId);
+        if (audioInputs.length > 0) {
+          setSelectedMic(audioInputs[0].deviceId);
+          //To fill Speaker input
+          if (session?.user?.id && session.user.name) {
+            setSpeaker({ user: {id: session.user.id, name: session.user.name }, mic: {deviceId: audioInputs[0].deviceId, deviceLabel: audioInputs[0].label}}); //TODO:
+          }
+        }
+
         stream.getTracks().forEach((track) => track.stop());
+
+        
 
         // const permission = await navigator.permissions.query({ name: "microphone" as PermissionName });
         // if (permission.state === "denied") {
@@ -157,7 +157,7 @@ export default function CorpusBasedFragment({
                 fullWidth
                 placeholder={t("enter_speaker_name")}
                 disabled
-                value={speaker ? speaker.name+" (You)" : ""}
+                value={speaker ? speaker.user.name+" (You)" : ""}
               />
             </Grid>
             <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>

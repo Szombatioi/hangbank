@@ -17,8 +17,7 @@ export interface CorpusHeaderType {
 
 interface ProjectOverviewProps {
   projectTitle: string;
-  speaker: SpeakerType; //TODO: perhaps make it a list for Mode 2
-  mic: string;
+  speakers: SpeakerType[]; //TODO: perhaps make it a list for Mode 2
   corpus: CorpusHeaderType;
   context?: string;
   corpusBlocks: CorpusBlockType[];
@@ -28,8 +27,7 @@ interface ProjectOverviewProps {
 
 export default function ProjectOverview({
   projectTitle,
-  speaker,
-  mic,
+  speakers,
   corpus,
   context,
   corpusBlocks,
@@ -52,9 +50,14 @@ export default function ProjectOverview({
       if (!session) throw new Error("User is not logged in!");
       await api.post("/dataset", {
         projectName: projectTitle,
-        microphone: mic,
         recordingContext: context,
-        speaker_ids: [speaker.id],
+        speakers: speakers.map((s) => {
+          return {
+            id: s.user.id,
+            mic_deviceId: s.mic.deviceId,
+            mic_label: s.mic.deviceLabel,
+          };
+        }),
         corpus_id: corpus.id,
         creator_id: session.user.id,
       });
@@ -77,11 +80,11 @@ export default function ProjectOverview({
               {t("project")}: {projectTitle}
             </Typography>
             <Typography>
-              {t("speaker")}: {speaker.name}
+              {t("speakers")}: {speakers.map((s)=> s.user.name).join(",")}
             </Typography>{" "}
             {/*TODO: speaker.name or ID */}
             <Typography>
-              {t("microphone")}: {mic}
+              {t("microphone")}: {speakers[0].mic.deviceLabel} {/*TODO: use as list.  Perhaps replace user, mic with Speaker entity */}
             </Typography>
             <Typography>
               {t("corpus")}: {corpus.name}

@@ -16,6 +16,10 @@ import { AudioBlock } from './audio_block/entities/audio_block.entity';
 import { CorpusBlock } from './corpus_block/entities/corpus_block.entity';
 import { CorpusModule } from './corpus/corpus.module';
 import { Corpus } from './corpus/entities/corpus.entity';
+import { SpeakerModule } from './speaker/speaker.module';
+import { MicrophoneModule } from './microphone/microphone.module';
+import { Microphone } from './microphone/entities/microphone.entity';
+import { Speaker } from './speaker/entities/speaker.entity';
 
 @Module({
   imports: [
@@ -29,7 +33,7 @@ import { Corpus } from './corpus/entities/corpus.entity';
       username: process.env.DB_USER,
       password: process.env.DB_PASS,
       database: process.env.DB_NAME,
-      entities: [User, Metadata, Dataset, AudioBlock, CorpusBlock, Corpus],
+      entities: [User, Metadata, Dataset, AudioBlock, CorpusBlock, Corpus, Microphone, Speaker],
       synchronize: true, //TODO: replace this with migrations in production
     }),
     MinioModule,
@@ -38,7 +42,9 @@ import { Corpus } from './corpus/entities/corpus.entity';
     DatasetModule,
     AudioBlockModule,
     CorpusBlockModule,
-    CorpusModule
+    CorpusModule,
+    SpeakerModule,
+    MicrophoneModule
   ],
   controllers: [AppController],
   providers: [AppService],

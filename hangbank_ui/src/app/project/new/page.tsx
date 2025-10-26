@@ -44,6 +44,7 @@ export interface CorpusBlockType {
 
 export default function NewProjectPage() {
   const {data: session} = useSession();
+  
   const contentIdentifiers = ["types", "config", "overview"];
   const [active, setActive] = useState<"types" | "config" | "overview">(
     "types"
@@ -186,8 +187,7 @@ export default function NewProjectPage() {
                 >
                   <ProjectOverview 
                     projectTitle={corpusResult.projectTitle}
-                    speaker={corpusResult.speaker}
-                    mic={corpusResult.mic}
+                    speakers={[corpusResult.speaker]}
                     corpus={corpusResult.corpus}
                     context={corpusResult.context}
                     corpusBlocks={corpusBlocks} 

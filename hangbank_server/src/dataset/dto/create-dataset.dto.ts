@@ -3,9 +3,8 @@ export class CreateDatasetDto {
     creator_id: string;
 
     //---Metadata---
-    microphone: string;
     recording_context?: string;
-    speaker_ids: string[]; //only IDs
+    speakers: {id: string, mic_deviceId: string, mic_label: string}[]; //only IDs + mic info
     
     //---Corpus---
     corpus_id: string;
