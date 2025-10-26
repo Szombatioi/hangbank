@@ -53,7 +53,7 @@ export default function OverviewPage() {
                 corpus={dataset.corpus}
                 context={dataset.context}
                 corpusBlocks={dataset.corpusBlocks}
-                displaySaveButton={false}
+                projectId={params.id}
               />
             </>
           )}

@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { SpeakerType } from "../project/new/corpus_based_fragment";
 import { useSession } from "next-auth/react";
 import { CorpusBlockType } from "../project/new/page";
+import { useRouter } from "next/navigation";
 
 export interface CorpusHeaderType {
   id: string;
@@ -22,7 +23,7 @@ interface ProjectOverviewProps {
   context?: string;
   corpusBlocks: CorpusBlockType[];
 
-  displaySaveButton?: boolean;
+  projectId?: string;
 }
 
 export default function ProjectOverview({
@@ -31,9 +32,10 @@ export default function ProjectOverview({
   corpus,
   context,
   corpusBlocks,
-  displaySaveButton = true,
+  projectId,
 }: ProjectOverviewProps) {
   const { t } = useTranslation("common");
+  const router = useRouter();
   const { showMessage } = useSnackbar();
   const { data: session } = useSession();
   const [saveButtonDisabled, setSaveButtonDisabled] = useState<boolean>(false);
@@ -104,10 +106,10 @@ export default function ProjectOverview({
               gap: 4,
             }}
           >
-            <Button variant="contained" endIcon={<Mic />}>
+            <Button onClick={()=> {router.push(`/record/corpus/${projectId}/0`)}} variant="contained" endIcon={<Mic />}>
               {t("start")}
             </Button>
-            {displaySaveButton && (
+            {!projectId && (
               <Button
                 disabled={saveButtonDisabled}
                 onClick={() => {

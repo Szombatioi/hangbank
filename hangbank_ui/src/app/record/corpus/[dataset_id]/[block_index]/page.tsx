@@ -43,7 +43,8 @@ export default function RecordPage() {
 
   const setup = async () => {
     //Get dataset
-    const dataset = await api.get<DatasetType>("");
+    const dataset = await api.get<DatasetType>(`/dataset/${params.dataset_id}`);
+    console.log(dataset);
 
     //Get mic that is saved as device in the metadata
     let mics = []
@@ -97,7 +98,7 @@ export default function RecordPage() {
       cursorColor: "#A6A3FF",
       barWidth: 2,
       height: 100,
-      url: "../sample.mp3",
+      url: "../../../sample.mp3",
       fillParent: false,
       minPxPerSec: minPxPerSec,
       autoScroll: true,
@@ -120,6 +121,10 @@ export default function RecordPage() {
     setIsPlayingAudio(false);
     waveSurferRef!.current!.stop();
   };
+
+  const startRecording = () => {
+    
+  }
 
   return (
     <>
@@ -212,7 +217,7 @@ export default function RecordPage() {
             </div>
             <div>
               <Tooltip title={t("record_audio")}>
-                <IconButton size="large" sx={{ border: "1px solid red" }}>
+                <IconButton onClick={()=>{startRecording()}} size="large" sx={{ border: "1px solid red" }}>
                   <Mic />
                 </IconButton>
               </Tooltip>
