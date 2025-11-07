@@ -55,5 +55,7 @@
     "user_aready_exists": "User already exists!",
     "could_not_load_datasets": "Could not load datasets",
     "project_saved": "Project saved successfully",
-    "resume_from_this_block": "Resume recording from this block"
+    "resume_from_this_block": "Resume recording from this block",
+    "project_already_exists": "Project already exists!",
+    "no_mic_access": "No microphone access! Enable it in the browser!"
 }

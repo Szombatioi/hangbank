@@ -2,6 +2,7 @@
 
 import api from "@/app/axios";
 import { DatasetType } from "@/app/my_datasets/overview/[id]/page";
+import Recorder from "@/app/record/recorder";
 import {
   Mic,
   Pause,
@@ -23,108 +24,61 @@ import WaveSurfer from "wavesurfer.js";
 
 export default function RecordPage() {
   const params = useParams<{
-    dataset_id: string,  //this also conatins the mic that we need the permission to use
-    block_index: string, //TODO: convert!!
+    dataset_id: string; //this also conatins the mic that we need the permission to use
+    block_index: string; //TODO: convert!!
   }>();
   const block_index = parseInt(params.block_index, 10);
 
-  const [isRecording, setIsRecording] = useState(false);
-  const [audioURL, setAudioURL] = useState<string | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
+  const [dataset, setDataset] = useState<DatasetType | null>(null);
+  const [currentBlockIndex, setCurrentBlockIndex] =
+    useState<number>(block_index);
+  const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null); //the currently recorded block's audio URL
+  const [recordedAudioBlob, setRecordedAudioBlob] = useState<Blob | null>(null); //the currently recorded block's audio Blob
 
-  const waveformRef = useRef<HTMLDivElement | null>(null);
-  const waveSurferRef = useRef<WaveSurfer | null>(null);
-
-  const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
-  const toggleAudioPlay = () => {
-    setIsPlayingAudio(!isPlayingAudio);
+  const handleAudioUrlUpdate = (url: string) => {
+    setRecordedAudioUrl(url);
   };
+
+  const handleAudioBlobUpdate = (blob: Blob) => {
+    setRecordedAudioBlob(blob);
+  };
+
+  // const [isRecording, setIsRecording] = useState(false);
+  // const [audioURL, setAudioURL] = useState<string | null>(null);
+  // const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  // const audioChunksRef = useRef<Blob[]>([]);
 
   const setup = async () => {
     //Get dataset
     const dataset = await api.get<DatasetType>(`/dataset/${params.dataset_id}`);
     console.log(dataset);
+    setDataset(dataset.data);
 
     //Get mic that is saved as device in the metadata
-    let mics = []
-    try {
-        await navigator.mediaDevices.getUserMedia({ audio: true }); 
-        
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        mics = devices.filter(device => device.kind === 'audioinput');
-      } catch (err) {
-        // console.error("Hiba a mikrofonok lekérésekor vagy engedély megtagadása: ", err);
-        return [];
-      }
+    // let mics = []
+    // try {
+    //     await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      //TODO folyt innen!
-      // const micInUse = mics.find((m) => m.label === dataset.mic);
-      // if (!micInUse) console.error("Could not find the desired mic");
-  }
+    //     const devices = await navigator.mediaDevices.enumerateDevices();
+    //     mics = devices.filter(device => device.kind === 'audioinput');
+    //   } catch (err) {
+    //     // console.error("Hiba a mikrofonok lekérésekor vagy engedély megtagadása: ", err);
+    //     return [];
+    //   }
 
-  useEffect(() => {
-    const ws = waveSurferRef.current;
-    if (!ws) return;
+    //   //TOD O folyt innen!
+    //   const selectedDevice = mics.find((m) => m.label === dataset.data.speakers[0].mic.deviceId);
+    //   if (!selectedDevice) console.error("Could not find the desired mic");
 
-    if (isPlayingAudio) {
-      ws.play();
-    } else {
-      ws.pause();
-    }
-  }, [isPlayingAudio]);
-
-  const [minPxPerSec, setMinPxPerSec] = useState<number>(15); //1-1000?
-  const handleSliderChange = (event: Event, newValue: number) => {
-    setMinPxPerSec(newValue);
+    //   const constraints = {
+    //     audio: { deviceId: selectedDevice ? { exact: selectedDevice.deviceId } : undefined }
+    //   };
+    //   const stream = await navigator.mediaDevices.getUserMedia(constraints);
   };
-
-  useEffect(() => {
-    if (waveSurferRef.current) {
-      waveSurferRef.current.zoom(minPxPerSec);
-    }
-  }, [minPxPerSec]);
 
   useEffect(() => {
     setup();
-
-    if (!waveformRef.current) return;
-
-    // Create wavesurfer only once
-    waveSurferRef.current = WaveSurfer.create({
-      container: waveformRef.current,
-      waveColor: "#4F4A85",
-      progressColor: "#383351",
-      cursorColor: "#A6A3FF",
-      barWidth: 2,
-      height: 100,
-      url: "../../../sample.mp3",
-      fillParent: false,
-      minPxPerSec: minPxPerSec,
-      autoScroll: true,
-      autoCenter: true,
-    });
-    waveSurferRef.current.on("click", () => {
-      setIsPlayingAudio(true);
-      waveSurferRef!.current!.play();
-    });
-
-    // console.log(isPlayingAudio);
-
-    return () => {
-      waveSurferRef.current?.destroy();
-      waveSurferRef.current = null;
-    };
   }, []);
-
-  const restartPlay = () => {
-    setIsPlayingAudio(false);
-    waveSurferRef!.current!.stop();
-  };
-
-  const startRecording = () => {
-    
-  }
 
   return (
     <>
@@ -144,58 +98,16 @@ export default function RecordPage() {
           </div>
 
           {/* Part 2: Waveform of audio */}
-          <div
-            style={{
-              justifySelf: "center",
-              border: "1px solid red",
-              width: "75%",
-              overflowX: "auto",
-              overflowY: "hidden",
-              whiteSpace: "nowrap",
-              marginTop: 8,
-              marginBottom: 8,
-            }}
-          >
-            <div id="waveform" ref={waveformRef} />
-            <div style={{ display: "flex", justifyContent: "center", gap: 4 }}>
-              <IconButton>
-                <ZoomOut />
-              </IconButton>
-              <Tooltip title={t("restart_recording")}>
-                <IconButton
-                  onClick={() => {
-                    restartPlay();
-                  }}
-                  size="medium"
-                  sx={{ border: "1px solid red" }}
-                >
-                  <RestartAlt />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title={t("play_recorded_audio")}>
-                <IconButton
-                  onClick={() => {
-                    toggleAudioPlay();
-                  }}
-                  size="medium"
-                  sx={{ border: "1px solid red" }}
-                >
-                  {isPlayingAudio ? (
-                    <>
-                      <Pause />
-                    </>
-                  ) : (
-                    <>
-                      <PlayArrow />
-                    </>
-                  )}
-                </IconButton>
-              </Tooltip>
-              <IconButton>
-                <ZoomIn />
-              </IconButton>
-            </div>
-          </div>
+          {/* TODO: set freq based on corpus setting (not save_freq_ms, this is just my preference) */}
+          {dataset && (
+            <Recorder
+              selectedDeviceId={dataset.speakers[0].mic.deviceId}
+              save_freq_ms={1000}
+              useTranscript={true}
+              onAudioUpdate={handleAudioUrlUpdate}
+              onRecordingStop={handleAudioBlobUpdate}
+            />
+          )}
 
           {/* Part 3: Buttons */}
           <div
@@ -217,7 +129,10 @@ export default function RecordPage() {
             </div>
             <div>
               <Tooltip title={t("record_audio")}>
-                <IconButton onClick={()=>{startRecording()}} size="large" sx={{ border: "1px solid red" }}>
+                {/* <IconButton onClick={()=>{startRecording()}} size="large" sx={{ border: "1px solid red" }}>
+                  <Mic />
+                </IconButton> */}
+                <IconButton size="large" sx={{ border: "1px solid red" }}>
                   <Mic />
                 </IconButton>
               </Tooltip>
@@ -231,18 +146,7 @@ export default function RecordPage() {
             </div>
           </div>
 
-          {/* Part 4: Transcribe */}
-          <div style={{ marginTop: 8, marginBottom: 8 }}>
-            <Box
-              sx={{
-                justifySelf: "center",
-                border: "1px solid red",
-                width: "75%",
-                minHeight: 256,
-                maxHeight: 512,
-              }}
-            ></Box>
-          </div>
+          {recordedAudioBlob && <>Blob ready !!!</>}
         </Paper>
       </Box>
     </>

@@ -46,6 +46,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const router = useRouter();
   return (
     <html lang="en">
       <body
@@ -54,6 +55,7 @@ export default function RootLayout({
       >
         <ThemeProvider theme={theme}>
           <SessionProvider>
+              <Button onClick={() => {router.push("/")}}>Home</Button>
             <AuthGuard>
               <CssBaseline />
               <LanguageProvider>

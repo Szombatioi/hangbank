@@ -40,6 +40,16 @@ export default function ProjectOverview({
   const { data: session } = useSession();
   const [saveButtonDisabled, setSaveButtonDisabled] = useState<boolean>(false);
 
+  const startRecordingPage = async () => {
+    if(projectId) {
+      // showMessage(t("project_already_exists"), Severity.warning);
+      router.push(`/record/corpus/${projectId}/0`);
+      return;
+    }
+    const resDatasetId = await saveProject();
+    router.push(`/record/corpus/${resDatasetId}/0`);
+  }
+
   const saveProject = async () => {
     //TODO: handle convoResult too!!
 
@@ -50,7 +60,7 @@ export default function ProjectOverview({
 
     try {
       if (!session) throw new Error("User is not logged in!");
-      await api.post("/dataset", {
+      const res = await api.post("/dataset", {
         projectName: projectTitle,
         recordingContext: context,
         speakers: speakers.map((s) => {
@@ -65,8 +75,10 @@ export default function ProjectOverview({
       });
       showMessage(t("project_saved"), Severity.success);
       setSaveButtonDisabled(true);
+      return res.data.id;
     } catch (err) {
       showMessage("error", Severity.error); //TODO error message translation
+      throw new Error();
     }
   };
   return (
@@ -106,7 +118,7 @@ export default function ProjectOverview({
               gap: 4,
             }}
           >
-            <Button onClick={()=> {router.push(`/record/corpus/${projectId}/0`)}} variant="contained" endIcon={<Mic />}>
+            <Button onClick={()=> {startRecordingPage()}} variant="contained" endIcon={<Mic />}>
               {t("start")}
             </Button>
             {!projectId && (

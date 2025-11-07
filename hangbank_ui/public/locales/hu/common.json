@@ -55,5 +55,7 @@
     "user_aready_exists": "Már létezik ez a felhasználó ezzel az email-címmel!",
     "could_not_load_datasets": "Nem sikerült betölteni az adathalmazokat",
     "project_saved": "Projekt sikeresen elmentve",
-    "resume_from_this_block": "Felvétel folytatása ettől a blokktól"
+    "resume_from_this_block": "Felvétel folytatása ettől a blokktól",
+    "project_already_exists": "Már létezik ez a projekt!",
+    "no_mic_access": "Nincs mikrofon hozzáférés! Engedélyezd a böngészőben."
 }
