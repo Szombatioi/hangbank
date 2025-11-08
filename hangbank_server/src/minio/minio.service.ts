@@ -1,7 +1,11 @@
-import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, Logger, InternalServerErrorException, Inject, forwardRef } from '@nestjs/common';
 import { Client } from 'minio';
 import * as path from 'path';
+import { CorpusService } from 'src/corpus/corpus.service';
+import { CorpusBlockService } from 'src/corpus_block/corpus_block.service';
+import { CorpusBlock } from 'src/corpus_block/entities/corpus_block.entity';
 import * as stream from 'stream';
+import { CorpusBlockDTO } from './dto/corpus-block-dto';
 
 @Injectable()
 export class MinioService {
@@ -12,7 +16,10 @@ export class MinioService {
   private readonly bucketNames = [this.audioBucket, this.corpusBucket, this.corpusBlockBucket];
   private readonly minioClient: Client;
 
-  constructor() {
+  constructor(
+    @Inject() private readonly corpusBlockService: CorpusBlockService,
+    @Inject(forwardRef(() => CorpusService)) private readonly corpusService: CorpusService
+  ) {
     this.minioClient = new Client({
       endPoint: process.env.MINIO_ENDPOINT || 'localhost',
       port: Number(process.env.MINIO_PORT) || 9000,
@@ -34,15 +41,17 @@ export class MinioService {
     });
   }
 
-  async uploadAudio(file: Express.Multer.File, bucket: string) {
-    const objectName = `${Date.now()}-${path.basename(file.originalname)}`;
+  //Uploads any kind of object
+  async uploadObject(file: Express.Multer.File, bucket: string) {
+    const objectName = `${Date.now()}-${path.basename(file.originalname)}`; //Creating unique object name
 
+    //Validating if bucket exists
     if(!this.bucketNames.includes(bucket)){
       throw new InternalServerErrorException('Invalid bucket name');
     }
 
     try {
-      //uploading audio object
+      //uploading object
       await this.minioClient.putObject(
         bucket,
         objectName,
@@ -63,7 +72,10 @@ export class MinioService {
     }
   }
 
-  async downloadAudio(objectName: string, bucket: string): Promise<stream.Readable> {
+
+  //Download any kind of object
+  async downloadObject(objectName: string, bucket: string): Promise<stream.Readable> {
+    //Validating if bucket exists
     if(!this.bucketNames.includes(bucket)){
       throw new InternalServerErrorException('Invalid bucket name');
     }
@@ -81,4 +93,46 @@ export class MinioService {
       throw new InternalServerErrorException('Failed to download file');
     }
   }
+
+
+  //Retrieves an array of corpus blocks in [n-2, n+3] form
+  async getCorpusBlockArray(corpusId: string, blockIndexFrom: number, blockIndexTo: number): Promise<CorpusBlockDTO[]> {
+    if(blockIndexFrom > blockIndexTo || blockIndexFrom < 0){
+      throw new InternalServerErrorException('Invalid block index range');
+    }
+    
+    try{
+      const corpus = await this.corpusService.findOne(corpusId, true);
+      if(blockIndexTo >= corpus.corpus_blocks.length){
+        throw new InternalServerErrorException('Block index out of range');
+      }
+
+      const blocks: CorpusBlockDTO[] = [];
+      for(let i = blockIndexFrom; i <= blockIndexTo; i++){
+        const block = {
+          corpusBlock: corpus.corpus_blocks[i],
+          text: ""
+        }
+        const object = await this.downloadObject(corpus.corpus_blocks[i].corpus_block_minio_link, this.corpusBlockBucket);
+        block.text = await this.streamToString(object);
+
+        blocks.push(block);
+      }
+
+      return blocks;
+
+    } catch(err){
+      throw new InternalServerErrorException('Failed to fetch corpus');
+    }
+  }
+
+  async streamToString(stream: stream.Readable): Promise<string> {
+    return new Promise((resolve, reject) => {
+      let data = '';
+      stream.on('data', (chunk) => (data += chunk.toString()));
+      stream.on('end', () => resolve(data));
+      stream.on('error', (err) => reject(err));
+    });
+  }
+
 }

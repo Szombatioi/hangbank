@@ -39,7 +39,7 @@ export class MinioController {
     }
 
     try {
-      return this.minioService.uploadAudio(file, bucket);
+      return this.minioService.uploadObject(file, bucket);
     } catch (error) {
       throw new HttpException('File upload failed', HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -49,12 +49,25 @@ export class MinioController {
   @Get(':bucket/download/:filename')
   async downloadFile(@Param('bucket') bucket: string, @Param('filename') filename: string, @Res() res: Response) {
     try {
-      const fileStream = await this.minioService.downloadAudio(filename, bucket);
+      const fileStream = await this.minioService.downloadObject(filename, bucket);
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       fileStream.pipe(res);
     }
     catch (error) {
       throw new HttpException('File download failed', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Get('blocks/:corpusId/:fromIndex/:toIndex')
+  async getCorpusBlocksInRange(
+    @Param('corpusId') corpusId: string,
+    @Param('fromIndex') fromIndex: number,
+    @Param('toIndex') toIndex: number,
+  ) {
+    try {
+      return this.minioService.getCorpusBlockArray(corpusId, fromIndex, toIndex);
+    } catch (error) {
+      throw new HttpException('Failed to retrieve corpus blocks', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 

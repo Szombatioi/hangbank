@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateCorpusDto } from './dto/create-corpus.dto';
 import { UpdateCorpusDto } from './dto/update-corpus.dto';
 import { MinioService } from 'src/minio/minio.service';
@@ -18,7 +18,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 @Injectable()
 export class CorpusService {
   constructor(
-    @Inject() private readonly minioService: MinioService,
+    @Inject(forwardRef(() => MinioService)) private readonly minioService: MinioService,
     // @Inject() private readonly corpusBlockService: CorpusBlockService,
     private readonly corpusSplitter: FileCorpusService,
     @InjectRepository(CorpusBlock)
@@ -28,7 +28,7 @@ export class CorpusService {
   ) {}
   async create(dto: CreateCorpusDto, file: Express.Multer.File) {
     //Step 1. Uploading Corpus to MinIO
-    const result = await this.minioService.uploadAudio(file, 'corpus');
+    const result = await this.minioService.uploadObject(file, 'corpus');
 
     console.log('Corpus MinIO success');
 
@@ -157,7 +157,7 @@ export class CorpusService {
 
       console.log("Starting block upload to MinIO");
       //Upload Corpus Block to MinIO to the 'corpus-blocks' bucket
-      var blockRes = await this.minioService.uploadAudio(
+      var blockRes = await this.minioService.uploadObject(
         fakeMulterFile,
         'corpus-blocks',
       );
@@ -220,8 +220,8 @@ export class CorpusService {
     return blocks_formatted;
   }
 
-  async findOne(id: string): Promise<Corpus> {
-    const corpus = await this.corpusRepository.findOne({where: {id}});
+  async findOne(id: string, includeBlocks: boolean = false): Promise<Corpus> {
+    const corpus = await this.corpusRepository.findOne({where: {id}, relations: includeBlocks ? {corpus_blocks: true} : {}});
     if(!corpus) throw new NotFoundException();
     return corpus;
   }

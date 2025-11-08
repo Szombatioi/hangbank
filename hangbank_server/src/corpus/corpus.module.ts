@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { CorpusService } from './corpus.service';
 import { CorpusController } from './corpus.controller';
 import { MinioModule } from 'src/minio/minio.module';
@@ -9,7 +9,7 @@ import { FileCorpusService } from './corpus_splitter.service';
 
 @Module({
   imports: [
-    MinioModule,
+    forwardRef(() => MinioModule),
     TypeOrmModule.forFeature([Corpus, CorpusBlock]),
   ],
   controllers: [CorpusController],
