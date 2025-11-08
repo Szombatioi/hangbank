@@ -6,6 +6,7 @@ import {
   ZoomIn,
   Mic,
   Stop,
+  SettingsVoice,
 } from "@mui/icons-material";
 import { Box, IconButton, Tooltip } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
@@ -159,16 +160,40 @@ export default function Recorder({
           if (onAudioUpdate) {
             onAudioUpdate(newUrl);
           }
-          //   console.log(`Blob mentve, méret: ${fullBlob.size} bájt.`);
         }
       };
 
-      newRecorder.start(save_freq_ms); // 2 másodpercenként ment
+
+      newRecorder.onstop = () => {
+        newStream?.getTracks().forEach((track) => track.stop());
+        
+        //Final blob
+        if (audioChunksRef.current.length > 0) {
+            const finalBlob = new Blob(audioChunksRef.current, {
+                type: "audio/webm",
+            });
+
+            onRecordingStop(finalBlob);
+            console.log("Felvétel sikeresen lezárva. Végleges Blob átadva.");
+        } else {
+             // Ez a helyzet akkor állhat elő, ha túl gyorsan nyomták meg a stop-ot
+            console.warn("Rögzítés leállítva, de nincs rögzített adat.");
+        }
+
+        // Állapotok nullázása
+        audioChunksRef.current = [];
+        setStream(null);
+        setRecorder(null);
+        // Az isRecording és isPaused már a stopRecording-ban frissült
+    };
+
+      //We start the recording here because setXYZ is async and we want to start right away
+      newRecorder.start(save_freq_ms);
       setIsRecording(true);
-    } catch (error) {
-      //   console.error("Hiba a mikrofon elérésében vagy a Stream beállításában:", error);
-      //   alert("Nincs mikrofon hozzáférés! Engedélyezd a böngészőben.");
+      setIsPaused(false);
+    } catch (err) {
       alert(t("no_mic_access"));
+      throw new Error();
     }
   };
 
@@ -185,56 +210,67 @@ export default function Recorder({
     setAudioUrl(newUrl);
   };
 
-  const handlePauseRecording = () => {
-    if (recorder && isRecording && !isPaused) {
-      recorder.pause();
-      setIsPaused(true);
+  const startRecording = async () => {
+    if (isRecording) return;
 
-      getAudioBlobAndUrl();
+    audioChunksRef.current = [];
+
+    try {
+      await getStreamAndSetupRecorder();
+      // if (recorder && stream) {
+      //   recorder!.start(save_freq_ms);
+      //   setIsPaused(false);
+      //   setIsRecording(true);
+      // }
+    } catch (err) {
+      alert(t("no_mic_access"));
     }
   };
 
-  const handleResumeRecording = () => {
+  const pauseRecording = () => {
+    if (recorder && isRecording && !isPaused) {
+      recorder!.pause();
+      setIsPaused(true);
+      // setIsRecording(false);
+      getAudioBlobAndUrl(); //Give URL back to caller on pause
+
+      //Give blob to the caller side even on pause!
+      const finalBlob = new Blob(audioChunksRef.current, {
+        type: "audio/webm",
+      });
+      if (onAudioUpdate) onAudioUpdate(audioUrl!);
+      if (onRecordingStop) onRecordingStop(finalBlob);
+    }
+  };
+
+  const resumeRecording = () => {
     if (recorder && isRecording && isPaused) {
       recorder.resume();
       setIsPaused(false);
+      // console.log("Felvétel folytatva.");
     }
   };
 
-  const handleToggleRecording = () => {
-    //Recording --> Pause
-    if (isRecording || isPaused) {
-      if (recorder && stream) {
-        recorder.stop();
-        stream.getTracks().forEach((track) => track.stop());
-        setStream(null);
+  const stopRecording = () => {
+    const currentRecorder = recorder;
+    const currentStream = stream;
+    const currentAudioUrl = audioUrl;
+
+    if (currentRecorder && (isRecording || isPaused)) {
+        // Állítsuk le a MediaRecorder-t. Ezzel kibocsátja az utolsó ondataavailable-t, majd az onstop-ot.
+        currentRecorder.stop();
+        
+        // Frissítjük a legfontosabb állapotot, hogy a gombok letiltódjanak
         setIsRecording(false);
         setIsPaused(false);
-        console.log("Felvétel megállítva.");
-
-        const finalBlob = new Blob(audioChunksRef.current, {
-          type: "audio/webm",
-        });
-
-        // 3. 💡 Visszaadjuk a Blob-ot a hívó oldalnak
-        onRecordingStop(finalBlob);
-      }
-    }
-    //Pause --> Recording
-    else {
-      if (!recorder) {
-        getStreamAndSetupRecorder();
-        setIsPaused(false);
-      }
-      // Újraindítási logika (ha a recorder már létezik, de leállt)
-      else if (recorder.state === "inactive") {
-        audioChunksRef.current = []; // Töröljük a korábbi felvételt
-        // Itt kell a null check a recorder-re a start hívás előtt!
-        recorder.start(save_freq_ms);
-        setIsRecording(true);
-        setIsPaused(false);
-        console.log("Felvétel újraindítva.");
-      }
+        
+        // Felszabadítjuk a memóriát, ami a lejátszáshoz kellett
+        if (currentAudioUrl) {
+            URL.revokeObjectURL(currentAudioUrl);
+            setAudioUrl(null);
+        }
+        
+        console.log("Felvétel leállítási kérése elküldve.");
     }
   };
 
@@ -256,45 +292,50 @@ export default function Recorder({
         <div id="waveform" ref={waveformRef} />
         {/* Recording buttons */}
         <div style={{ display: "flex", justifyContent: "center", gap: 4 }}>
-          <Tooltip title={t("record_audio")}>
-            <IconButton
-              onClick={() => {
-                if (isRecording) {
-                  handleToggleRecording();
-                } else if (isRecording && !isPaused) {
-                  handlePauseRecording();
-                } else if (isRecording && isPaused) {
-                  handleResumeRecording();
+          <IconButton
+            onClick={() => {
+              if (!isRecording) {
+                startRecording();
+              } else {
+                if (isPaused) {
+                  resumeRecording();
+                } else {
+                  pauseRecording();
                 }
-              }}
-              size="medium"
-              sx={{ border: "1px solid red" }}
-            >
-              {isRecording ? (
-                isPaused ? (
-                  <PlayArrow />
-                ) : (
-                  <Pause />
-                )
+              }
+            }}
+            size="medium"
+            sx={{ border: "1px solid red" }}
+          >
+            {isRecording ? (
+              isPaused ? (
+                <>
+                  <SettingsVoice />
+                </>
               ) : (
                 <>
-                  <Mic />
+                  <Pause />
                 </>
-              )}
-            </IconButton>
-          </Tooltip>
+              )
+            ) : (
+              <>
+                <Mic />
+              </>
+            )}
+          </IconButton>
 
-          {/* Stop button */}
           {isRecording && (
-            <Tooltip title={t("stop_recording")}>
+            <>
               <IconButton
-                onClick={() => {}}
+                onClick={() => {
+                  stopRecording();
+                }}
                 size="medium"
                 sx={{ border: "1px solid red" }}
               >
                 <Stop />
               </IconButton>
-            </Tooltip>
+            </>
           )}
         </div>
       </div>
