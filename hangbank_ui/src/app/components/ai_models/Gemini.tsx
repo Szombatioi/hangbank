@@ -17,35 +17,45 @@ export default class GeminiAI implements AIModel{
 
     //Returns the first response of the AI model
     startChat = async () => {
+        if(!this.chat){
+            console.log("Initializing chat");
+            await this.createChat();
+        }
+        
+
         if(this.language != "hu-HU"){
-            const translatePrompt = `Fordítsd le a következő szöveget a következő nyelvre: ${this.language}\n${this.initialPrompt}`;
+            const translatePrompt = `Fordítsd le a következő szöveget a következő nyelvre: ${this.language}\n${this.initialPrompt}. A válaszod csakis a fordított szövegből álljon!`;
             try{
+                console.log("Sending translation message");
                 const translatedResponse = await this.chat.sendMessage({ message: translatePrompt });
                 this.initialPrompt = translatedResponse.text;
-
-                //Sending first message to the AI to receive topics we can talk about
-                const initialResponse = await this.chat.sendMessage({ message: this.initialPrompt });
-                return initialResponse.text;
             }catch(error){
                 console.error("Error translating initial prompt:", error);
             }
         }
+
+        //Sending first message to the AI to receive topics we can talk about
+        console.log("Sending initial message");
+        const initialResponse = await this.chat.sendMessage({ message: this.initialPrompt });
+        console.log(initialResponse);
+        return initialResponse.text;
     }
 
     sendMessage = async (message: string) => {
         if(!this.chat){
-            await this.createChat();
+            throw new Error("Chat is not yet initialized. You can initialize it with StartChat()")
         }
         try{
-            return this.chat.sendMessage({ message: message });
+            const res = await this.chat.sendMessage({ message: message });
+            return res.text;
         } catch(error){
             console.error("Error sending message to GeminiAI:", error);
         }  
     };
 
-    constructor(modelName: string = "gemini-2.5-flash", language: string = "en"){
-        dotenv.config();
-        this.apiKey = process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY : (() => { throw new Error("Could not initialize GeminiAI"); })();
+    constructor(apiKey: string, modelName: string = "gemini-2.5-flash", language: string = "en"){
+        // dotenv.config();
+        this.apiKey = apiKey; //process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY : (() => { throw new Error("Could not retrieve Gemini API key"); })();
         this.ai = new GoogleGenAI({apiKey: this.apiKey});
         this.modelName = modelName;
         this.language = language;

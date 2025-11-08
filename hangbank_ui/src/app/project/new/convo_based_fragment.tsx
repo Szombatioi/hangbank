@@ -38,7 +38,13 @@ interface Mic {
   deviceId: string;
 }
 
-export default function ConvoBasedFragment() {
+export interface ConvoBasedFragmentProps {
+  invokeNextStep: (val: {
+    
+  }) => void;
+}
+
+export default function ConvoBasedFragment({invokeNextStep}: ConvoBasedFragmentProps) {
   const { showMessage } = useSnackbar();
   //TODO: handle error if the AI model is unavailable (e.g. when token limit is reached)
 
@@ -110,6 +116,8 @@ export default function ConvoBasedFragment() {
       showMessage(t("pls_fill_all_fields"), Severity.error);
       return;
     }
+
+    invokeNextStep({});
   }
 
   return (
