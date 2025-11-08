@@ -20,8 +20,9 @@ interface RecorderProps {
   save_freq_ms: number;
   useTranscript: boolean;
   onAudioUpdate?: (url: string) => void;
-  onRecordingStop: (finalBlob: Blob) => void;
+  onRecordingStop: (finalBlob: Blob, transcription?: string) => void;
   onSpacePress?: () => void;
+  onTranscriptUpdate?: (text: string) => void;
   language: string;
 }
 
@@ -32,7 +33,8 @@ export default function Recorder({
   onAudioUpdate,
   onRecordingStop,
   onSpacePress,
-  language
+  language,
+  onTranscriptUpdate,
 }: RecorderProps) {
   const { t } = useTranslation("common");
 
@@ -112,6 +114,13 @@ export default function Recorder({
 
     recognitionRef.current = recognition;
   }, []);
+
+  useEffect(() => {
+    // console.log("onTranscriptUpdate: ", transcript, wsiTranscriptRef.current)
+    if (onTranscriptUpdate) {
+      onTranscriptUpdate(transcript + wsi_transcript);
+    }
+  }, [transcript, wsi_transcript]);
 
   const startTranscribe = () => {
     if (useTranscript) {
@@ -368,14 +377,18 @@ export default function Recorder({
     }
   };
 
-  
   //Handle Spacebar press to go to next block
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.code === "Space" && isRecordingRef.current && !(isPausedRef.current)) {
+      if (
+        onSpacePress &&
+        event.code === "Space" &&
+        isRecordingRef.current &&
+        !isPausedRef.current
+      ) {
         event.preventDefault(); // prevents scrolling the page
         console.log("Spacebar pressed - moving to next block");
-        if(onSpacePress) onSpacePress();
+        if (onSpacePress) onSpacePress();
       }
     };
 
@@ -385,7 +398,6 @@ export default function Recorder({
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
-
 
   return (
     <div
@@ -428,7 +440,7 @@ export default function Recorder({
               }
             }}
             size="medium"
-            sx={{ boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.2)', }}
+            sx={{ boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.2)" }}
           >
             {isRecording ? (
               isPaused ? (
@@ -454,7 +466,7 @@ export default function Recorder({
                   stopRecording();
                 }}
                 size="medium"
-                sx={{ boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.2)', }}
+                sx={{ boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.2)" }}
               >
                 <Stop />
               </IconButton>
@@ -468,7 +480,7 @@ export default function Recorder({
                   toggleAudioPlay();
                 }}
                 size="medium"
-                sx={{ boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.2)', }}
+                sx={{ boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.2)" }}
               >
                 {isPlayingAudio ? <Pause /> : <PlayArrow />}
               </IconButton>
@@ -506,10 +518,15 @@ export default function Recorder({
               >
                 <Typography>{transcript + wsi_transcript}</Typography>
 
-                <Typography align="center" sx={{
-                  marginBlock: -2,
-                  color: "#ccc",
-                }}>{t("transcription")}</Typography>
+                <Typography
+                  align="center"
+                  sx={{
+                    marginBlock: -2,
+                    color: "#ccc",
+                  }}
+                >
+                  {t("transcription")}
+                </Typography>
               </Paper>
             </Box>
           </div>
