@@ -107,10 +107,11 @@ export class MinioService {
         throw new InternalServerErrorException('Block index out of range');
       }
 
+      const corpusBlocks = corpus.corpus_blocks.sort((a, b) => a.sequence - b.sequence);
       const blocks: CorpusBlockDTO[] = [];
       for(let i = blockIndexFrom; i <= blockIndexTo; i++){
         const block = {
-          corpusBlock: corpus.corpus_blocks[i],
+          corpusBlock: corpusBlocks[i],
           text: ""
         }
         const object = await this.downloadObject(corpus.corpus_blocks[i].corpus_block_minio_link, this.corpusBlockBucket);
