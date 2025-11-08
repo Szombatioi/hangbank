@@ -134,42 +134,76 @@ export default function RecordPage() {
             <Box
               sx={{
                 justifySelf: "center",
-                border: "1px solid red",
+                // border: "1px solid red",
                 width: "75%",
                 minHeight: 256,
                 maxHeight: 512,
                 display: "flex",
-                flexDirection: "column",
                 justifyContent: "center",
               }}
             >
-              {dataset && blocks && blocks.length > 0 && (
+              <Paper
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  alignItems: "space-between",
+                  padding: 4,
+                  boxShadow: "none",
+                  border: "2px solid #ccc",
+                }}
+                elevation={4}
+              >
                 <>
-                  {/* Previous blocks */}
-                  {previousBlockTexts.length > 0 &&
-                    previousBlockTexts.map((b, i) => (
-                      <Typography variant="h5" align="center" color="#ccc" key={i}>
-                        {b}
-                      </Typography>
-                    ))}
+                {dataset && blocks && blocks.length > 0 && (
+                  <>
+                    {/* Previous blocks */}
+                    {previousBlockTexts.length > 0 &&
+                      previousBlockTexts.map((b, i) => (
+                        <Typography
+                          variant="h5"
+                          align="center"
+                          color="#888"
+                          key={i}
+                        >
+                          {b}
+                        </Typography>
+                      ))}
 
-                  <Typography
-                    variant="h4"
-                    align="center"
-                    sx={{ fontWeight: 800 }}
-                  >
-                    {blocks[currentBlockIndex].text}
-                  </Typography>
+                    <Typography
+                      variant="h4"
+                      align="center"
+                      sx={{ fontWeight: 800 }}
+                    >
+                      {blocks[currentBlockIndex].text}
+                    </Typography>
 
-                  {/* Following blocks */}
-                  {followingBlockTexts.length > 0 &&
-                    followingBlockTexts.map((b, i) => (
-                      <Typography variant="h5" align="center" color="#ccc" key={i}>
-                        {b}
-                      </Typography>
-                    ))}
+                    {/* Following blocks */}
+                    {followingBlockTexts.length > 0 &&
+                      followingBlockTexts.map((b, i) => (
+                        <Typography
+                          variant="h5"
+                          align="center"
+                          color="#888"
+                          key={i}
+                        >
+                          {b}
+                        </Typography>
+                      ))}
+                  </>
+                )}
                 </>
-              )}
+
+                <Typography
+                  align="center"
+                  sx={{
+                    marginBottom: -4,
+                    color: "#ccc",
+                  }}
+                >
+                  {t("corpus")}
+                </Typography>
+              </Paper>
             </Box>
           </div>
 
@@ -196,33 +230,33 @@ export default function RecordPage() {
               marginBottom: 8,
             }}
           >
-            <div>
+            {/* <div>
               <Tooltip title={t("record_block_again")}>
                 <IconButton size="medium" sx={{ border: "1px solid red" }}>
                   <Undo />
                 </IconButton>
               </Tooltip>
-            </div>
-            <div>
+            </div> */}
+            {/* <div>
               <Tooltip title={t("record_audio")}>
-                {/* <IconButton onClick={()=>{startRecording()}} size="large" sx={{ border: "1px solid red" }}>
+                <IconButton onClick={()=>{startRecording()}} size="large" sx={{ border: "1px solid red" }}>
                   <Mic />
-                </IconButton> */}
+                </IconButton>
                 <IconButton size="large" sx={{ border: "1px solid red" }}>
                   <Mic />
                 </IconButton>
               </Tooltip>
-            </div>
-            <div>
+            </div> */}
+            {/* <div>
               <Tooltip title={t("record_next_block")}>
                 <IconButton size="medium" sx={{ border: "1px solid red" }}>
                   <Redo />
                 </IconButton>
               </Tooltip>
-            </div>
+            </div> */}
           </div>
 
-          {recordedAudioBlob && <>Blob ready !!!</>}
+          {/* {recordedAudioBlob && <>Blob ready !!!</>} */}
         </Paper>
       </Box>
     </>
