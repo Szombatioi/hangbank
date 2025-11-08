@@ -1,17 +1,26 @@
 "use client";
 import { AIModel } from "@/app/components/ai_models/ai-interface";
 import GeminiAI from "@/app/components/ai_models/Gemini";
-import { Button, CircularProgress, Paper, Typography } from "@mui/material";
+import {
+  Button,
+  CircularProgress,
+  Paper,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 
 export default function ConvoBasedRecordingPage() {
   //TODO fetch dataset_id param
-
+  //TODO save chat history
+  //TODO handle space to send current message (now it is only a button click)
   //Init AI model
   //TODO useEffect to fetch ai model, now we'll use a temporary value
   const ai_model_name = "gemini-2.5-flash";
   const [aiModel, setAiModel] = useState<AIModel | null>(null);
   const [possibleTopics, setPossibleTopics] = useState<string[]>([]);
+
+  const [transcription, setTranscription] = useState<string | null>(null);
 
   const [isWaitingForResponse, setIsWaitingForResponse] =
     useState<boolean>(false);
@@ -23,6 +32,16 @@ export default function ConvoBasedRecordingPage() {
 
   const hasStartedChat = useRef(false);
   const topicSelected = useRef(false);
+
+  const sendMessage = async () => {
+    if(!transcription) return;
+
+    setIsWaitingForResponse(true);
+    const res = await aiModel!.sendMessage(transcription);
+    setResponses((prev) => [...prev, res]);
+    setTranscription(null);
+    setIsWaitingForResponse(false);
+  };
 
   useEffect(() => {
     async function startChat() {
@@ -82,9 +101,28 @@ export default function ConvoBasedRecordingPage() {
             </>
           ) : (
             <>
-              {responses.map((r, i) => (
-                <Typography key={i}>{r}</Typography>
-              ))}
+              {topicSelected.current && (
+                <>
+                  {responses.map((r, i) => (
+                    <Typography key={i}>{r}</Typography>
+                  ))}
+
+                  {/* TODO: replace temporaryText */}
+                  <TextField
+                    value={transcription ?? ""}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      setTranscription(e.target.value);
+                    }}
+                  ></TextField>
+                  <Button
+                    onClick={() => {
+                      sendMessage();
+                    }}
+                  >
+                    Send
+                  </Button>
+                </>
+              )}
             </>
           )}
         </>
