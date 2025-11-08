@@ -17,6 +17,8 @@ export interface CorpusBlockCardProps {
   sequence: number;
   filename: string;
   status: CorpusBlockStatus; //This will be false on the Create Project: Overview screen
+
+  onStartProject: (index: number) => void;
 }
 
 export enum CorpusBlockStatus {
@@ -29,12 +31,14 @@ export default function CorpusBlockCard({
   sequence,
   filename,
   status,
+  onStartProject,
 }: CorpusBlockCardProps) {
   const { t } = useTranslation("common");
   const filename_display =
     filename.length > 10
       ? filename.slice(0, 7) + "..." + filename.slice(-10)
       : filename;
+
   return (
     <>
       {/* Design: 
@@ -103,7 +107,7 @@ export default function CorpusBlockCard({
             )}
           </Icon>
           <Tooltip title={t("resume_from_this_block")}>
-          <IconButton sx={{}}>
+          <IconButton onClick={() => onStartProject && onStartProject(sequence-1)}>
             <PlayArrow fontSize="large" htmlColor="#00BB00" />
           </IconButton>
           </Tooltip>

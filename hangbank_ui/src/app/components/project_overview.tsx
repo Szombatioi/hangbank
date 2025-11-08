@@ -40,14 +40,14 @@ export default function ProjectOverview({
   const { data: session } = useSession();
   const [saveButtonDisabled, setSaveButtonDisabled] = useState<boolean>(false);
 
-  const startRecordingPage = async () => {
+  const startRecordingPage = async (index: number = 0) => {
     if(projectId) {
       // showMessage(t("project_already_exists"), Severity.warning);
-      router.push(`/record/corpus/${projectId}/0`);
+      router.push(`/record/corpus/${projectId}/${index}`);
       return;
     }
     const resDatasetId = await saveProject();
-    router.push(`/record/corpus/${resDatasetId}/0`);
+    router.push(`/record/corpus/${resDatasetId}/${index}`);
   }
 
   const saveProject = async () => {
@@ -142,6 +142,7 @@ export default function ProjectOverview({
                   sequence={block.sequence}
                   filename={block.filename}
                   status={block.status}
+                  onStartProject={() => startRecordingPage(index)}
                 />
               </Grid>
             ))}

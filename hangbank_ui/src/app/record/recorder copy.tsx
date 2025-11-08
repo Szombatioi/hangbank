@@ -21,6 +21,7 @@ interface RecorderProps {
   useTranscript: boolean;
   onAudioUpdate?: (url: string) => void;
   onRecordingStop: (finalBlob: Blob) => void;
+  onSpacePress?: () => void;
 }
 
 export default function Recorder({
@@ -29,6 +30,7 @@ export default function Recorder({
   useTranscript,
   onAudioUpdate,
   onRecordingStop,
+  onSpacePress,
 }: RecorderProps) {
   const { t } = useTranslation("common");
 
@@ -172,6 +174,10 @@ export default function Recorder({
     waveSurferRef.current.on("click", () => {
       setIsPlayingAudio(true);
       waveSurferRef!.current!.play();
+    });
+
+    waveSurferRef.current.on("finish", () => {
+      setIsPlayingAudio(false);
     });
 
     // console.log(isPlayingAudio);
@@ -359,6 +365,25 @@ export default function Recorder({
       // console.log("Felvétel leállítási kérése elküldve.");
     }
   };
+
+  
+  //Handle Spacebar press to go to next block
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.code === "Space" && isRecordingRef.current && !(isPausedRef.current)) {
+        event.preventDefault(); // prevents scrolling the page
+        console.log("Spacebar pressed - moving to next block");
+        if(onSpacePress) onSpacePress();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
 
   return (
     <div

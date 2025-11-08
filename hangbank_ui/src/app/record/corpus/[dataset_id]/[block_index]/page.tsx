@@ -20,6 +20,7 @@ import {
 } from "@mui/icons-material";
 import {
   Box,
+  Button,
   IconButton,
   Paper,
   Slider,
@@ -49,6 +50,20 @@ export default function RecordPage() {
     block_index: string; //TODO: convert!!
   }>();
   const block_index = parseInt(params.block_index, 10);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.code === "Space") {
+        event.preventDefault(); // prevents scrolling the page
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   const [dataset, setDataset] = useState<DatasetType | null>(null);
   const [blocks, setBlocks] = useState<CorpusBlockWithText[] | null>(null);
@@ -82,26 +97,32 @@ export default function RecordPage() {
     const fromIndex =
       currentBlockIndex - 2 < currentBlockIndex ? 0 : currentBlockIndex - 2;
     const toIndex =
-      currentBlockIndex + 3 > dataset.data.corpusBlocks.length
-        ? dataset.data.corpusBlocks.length
+      currentBlockIndex + 3 > dataset.data.corpusBlocks.length - 1
+        ? dataset.data.corpusBlocks.length - 1
         : currentBlockIndex + 3;
+    console.log(dataset.data.corpusBlocks.length);
+    console.log(currentBlockIndex);
+    console.log(toIndex);
     const blocks = await api.get<CorpusBlockWithText[]>(
       `/minio/blocks/${dataset.data.corpus.id}/${fromIndex}/${toIndex}`
     );
     console.log("Waaaaaa");
     console.log(blocks.data);
-    setBlocks(blocks.data);
+    await setBlocks(blocks.data);
+    setPrevFollowingBlocks(currentBlockIndex, blocks.data);
+  };
 
+  const setPrevFollowingBlocks = (
+    index: number,
+    blocks: CorpusBlockWithText[]
+  ) => {
     //Set previous block texts
     const array: string[] = [];
+    //Previous by 2 indecies
     const prev_2: string | null =
-      currentBlockIndex - 2 >= 0
-        ? blocks.data[currentBlockIndex - 2].text
-        : null; //TODO: and if > length?
+      index - 2 >= 0 ? blocks[index - 2].text : null; //TODO: and if > length?
     const prev_1: string | null =
-      currentBlockIndex - 1 >= 0
-        ? blocks.data[currentBlockIndex - 1].text
-        : null;
+      index - 1 >= 0 ? blocks[index - 1].text : null;
     if (prev_2) array.push(prev_2);
     if (prev_1) array.push(prev_1);
     setPreviousBlockTexts(array);
@@ -109,16 +130,79 @@ export default function RecordPage() {
     //Set following block texts
     const array2: string[] = [];
     const foll_1: string | null =
-      currentBlockIndex + 1 < blocks.data.length
-        ? blocks.data[currentBlockIndex + 1].text
-        : null; //TODO: and if > length?
+      index + 1 < blocks.length ? blocks[index + 1].text : null; //TODO: and if > length?
     const foll_2: string | null =
-      currentBlockIndex + 2 < blocks.data.length
-        ? blocks.data[currentBlockIndex + 2].text
-        : null;
+      index + 2 < blocks.length ? blocks[index + 2].text : null;
     if (foll_1) array2.push(foll_1);
     if (foll_2) array2.push(foll_2);
     setFollowingBlockTexts(array2);
+  };
+
+  const datasetRef = useRef<DatasetType | null>(null);
+  const blocksRef = useRef<CorpusBlockWithText[] | null>(null);
+  const currentBlockIndexRef = useRef<number>(block_index);
+  useEffect(() => {
+    datasetRef.current = dataset;
+  }, [dataset]);
+  useEffect(() => {
+    blocksRef.current = blocks;
+  }, [blocks]);
+  useEffect(() => {
+    currentBlockIndexRef.current = currentBlockIndex;
+  }, [currentBlockIndex]);
+
+  const nextBlock = async () => {
+    const dataset = datasetRef.current;
+    const blocks = blocksRef.current;
+    let currentIndex = currentBlockIndexRef.current;
+
+    if (!dataset || !blocks) {
+      console.log("!dataset || !blocks");
+      console.log("Dataset: ", dataset);
+      console.log("Blocks: ", blocks);
+      return;
+    }
+    if (currentIndex + 1 >= dataset!.corpusBlocks!.length) {
+      console.log("currentIndex + 1 >= dataset!.corpusBlocks!.length");
+      return;
+    }
+
+    //TODO: assign this Blob to the curpus block before moving on
+
+    const newIndex = currentIndex + 1;
+    currentBlockIndexRef.current = newIndex;
+    setCurrentBlockIndex(newIndex);
+
+    const blocksNeeded = newIndex + 3;
+    if (
+      blocksNeeded >= blocks.length &&
+      blocks.length < dataset.corpusBlocks.length
+    ) {
+      const fromNewIndex = blocks.length;
+      const toNewIndex = Math.min(
+        fromNewIndex + 3,
+        dataset.corpusBlocks.length - 1
+      );
+
+      try {
+        const res = await api.get<CorpusBlockWithText[]>(
+          `/minio/blocks/${dataset.corpus.id}/${fromNewIndex}/${toNewIndex}`
+        );
+        const newBlocks = [...blocks, ...res.data];
+        blocksRef.current = newBlocks;
+        setBlocks(newBlocks);
+
+        // Update previous/following arrays
+        setPrevFollowingBlocks(newIndex, newBlocks);
+      } catch (error) {
+        console.error("Failed to fetch more blocks:", error);
+      }
+    } else {
+      setPrevFollowingBlocks(newIndex, blocks);
+    }
+
+    //Update the previous and following blocks
+    //If we have no blocks in the buffer, load more
   };
 
   useEffect(() => {
@@ -128,14 +212,14 @@ export default function RecordPage() {
   return (
     <>
       <Box sx={{ display: "flex", justifyContent: "center" }}>
-        <Paper elevation={3} sx={{ width: "85%" }}>
+        <Paper elevation={3} sx={{ width: "85%", padding: 2 }}>
           {/* Part 1: Corpus block viewer */}
-          <div style={{ marginTop: 8, marginBottom: 8 }}>
+          <div style={{ marginTop: 8, marginBottom: 8, width: "100%" }}>
             <Box
               sx={{
                 justifySelf: "center",
                 // border: "1px solid red",
-                width: "75%",
+                width: "100%",
                 minHeight: 256,
                 maxHeight: 512,
                 display: "flex",
@@ -155,43 +239,43 @@ export default function RecordPage() {
                 elevation={4}
               >
                 <>
-                {dataset && blocks && blocks.length > 0 && (
-                  <>
-                    {/* Previous blocks */}
-                    {previousBlockTexts.length > 0 &&
-                      previousBlockTexts.map((b, i) => (
-                        <Typography
-                          variant="h5"
-                          align="center"
-                          color="#888"
-                          key={i}
-                        >
-                          {b}
-                        </Typography>
-                      ))}
+                  {dataset && blocks && blocks.length > 0 && (
+                    <>
+                      {/* Previous blocks */}
+                      {previousBlockTexts.length > 0 &&
+                        previousBlockTexts.map((b, i) => (
+                          <Typography
+                            variant="h5"
+                            align="center"
+                            color="#888"
+                            key={i}
+                          >
+                            {b}
+                          </Typography>
+                        ))}
 
-                    <Typography
-                      variant="h4"
-                      align="center"
-                      sx={{ fontWeight: 800 }}
-                    >
-                      {blocks[currentBlockIndex].text}
-                    </Typography>
+                      <Typography
+                        variant="h4"
+                        align="center"
+                        sx={{ fontWeight: 800 }}
+                      >
+                        {blocks[currentBlockIndex].text}
+                      </Typography>
 
-                    {/* Following blocks */}
-                    {followingBlockTexts.length > 0 &&
-                      followingBlockTexts.map((b, i) => (
-                        <Typography
-                          variant="h5"
-                          align="center"
-                          color="#888"
-                          key={i}
-                        >
-                          {b}
-                        </Typography>
-                      ))}
-                  </>
-                )}
+                      {/* Following blocks */}
+                      {followingBlockTexts.length > 0 &&
+                        followingBlockTexts.map((b, i) => (
+                          <Typography
+                            variant="h5"
+                            align="center"
+                            color="#888"
+                            key={i}
+                          >
+                            {b}
+                          </Typography>
+                        ))}
+                    </>
+                  )}
                 </>
 
                 <Typography
@@ -216,6 +300,7 @@ export default function RecordPage() {
               useTranscript={true}
               onAudioUpdate={handleAudioUrlUpdate}
               onRecordingStop={handleAudioBlobUpdate}
+              onSpacePress={nextBlock}
             />
           )}
 
@@ -257,6 +342,9 @@ export default function RecordPage() {
           </div>
 
           {/* {recordedAudioBlob && <>Blob ready !!!</>} */}
+          <Button onClick={nextBlock} variant="contained" endIcon={<Mic />}>
+            next
+          </Button>
         </Paper>
       </Box>
     </>

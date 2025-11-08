@@ -97,19 +97,29 @@ export class MinioService {
 
   //Retrieves an array of corpus blocks in [n-2, n+3] form
   async getCorpusBlockArray(corpusId: string, blockIndexFrom: number, blockIndexTo: number): Promise<CorpusBlockDTO[]> {
-    if(blockIndexFrom > blockIndexTo || blockIndexFrom < 0){
+    const blockIndexFromNum = Number(blockIndexFrom);
+    const blockIndexToNum = Number(blockIndexTo);
+
+    console.log(`Minio blocks from ${blockIndexFromNum} to ${blockIndexToNum}`)
+    if(blockIndexFromNum > blockIndexToNum || blockIndexFromNum < 0){
+      console.error("blockIndexFromNum: ", blockIndexFromNum);
+      console.error("blockIndexToNum: ", blockIndexToNum);
+      console.error(`blockIndexFromNum > blockIndexToNum: ${blockIndexFromNum > blockIndexToNum}`);
+      console.error(`blockIndexFromNum < 0: ${blockIndexFromNum < 0}`);
+
+      console.error(`Invalid block index range: from ${blockIndexFromNum} to ${blockIndexToNum}`);
       throw new InternalServerErrorException('Invalid block index range');
     }
     
     try{
       const corpus = await this.corpusService.findOne(corpusId, true);
-      if(blockIndexTo >= corpus.corpus_blocks.length){
+      if(blockIndexToNum >= corpus.corpus_blocks.length){
         throw new InternalServerErrorException('Block index out of range');
       }
 
       const corpusBlocks = corpus.corpus_blocks.sort((a, b) => a.sequence - b.sequence);
       const blocks: CorpusBlockDTO[] = [];
-      for(let i = blockIndexFrom; i <= blockIndexTo; i++){
+      for(let i = blockIndexFromNum; i <= blockIndexToNum; i++){
         const block = {
           corpusBlock: corpusBlocks[i],
           text: ""

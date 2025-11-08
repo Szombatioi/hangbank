@@ -10,6 +10,7 @@ import { SessionProvider, useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect } from "react";
 import { signOut } from "next-auth/react";
+import Navbar from "./components/navbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -55,13 +56,10 @@ export default function RootLayout({
       >
         <ThemeProvider theme={theme}>
           <SessionProvider>
-              <Button onClick={() => {router.push("/")}}>Home</Button>
             <AuthGuard>
               <CssBaseline />
               <LanguageProvider>
-                <SnackbarProvider>
-                  {children}
-                </SnackbarProvider>
+                <SnackbarProvider>{children}</SnackbarProvider>
               </LanguageProvider>
             </AuthGuard>
           </SessionProvider>
@@ -75,7 +73,6 @@ function AuthGuard({ children }: { children: ReactNode }) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
-
 
   useEffect(() => {
     const isAuthPage = pathname.startsWith("/auth");
@@ -91,8 +88,16 @@ function AuthGuard({ children }: { children: ReactNode }) {
       </div>
     );
 
-  return <>
-  {session && <Button onClick={() => {signOut({callbackUrl: "/"})}}>Sign out</Button>}
-  {children}
-  </>;
+  return (
+    <>
+      {session && (
+        <Navbar
+          signOutCallback={(options) =>
+            signOut({ callbackUrl: "/", ...options })
+          }
+        />
+      )}
+      {children}
+    </>
+  );
 }
