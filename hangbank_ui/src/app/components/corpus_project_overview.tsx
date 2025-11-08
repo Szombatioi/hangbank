@@ -14,9 +14,10 @@ import { useRouter } from "next/navigation";
 export interface CorpusHeaderType {
   id: string;
   name: string;
+  language: string;
 }
 
-interface ProjectOverviewProps {
+interface CorpusProjectOverviewProps {
   projectTitle: string;
   speakers: SpeakerType[]; //TODO: perhaps make it a list for Mode 2
   corpus: CorpusHeaderType;
@@ -26,14 +27,14 @@ interface ProjectOverviewProps {
   projectId?: string;
 }
 
-export default function ProjectOverview({
+export default function CorpusProjectOverview({
   projectTitle,
   speakers,
   corpus,
   context,
   corpusBlocks,
   projectId,
-}: ProjectOverviewProps) {
+}: CorpusProjectOverviewProps) {
   const { t } = useTranslation("common");
   const router = useRouter();
   const { showMessage } = useSnackbar();
@@ -62,6 +63,7 @@ export default function ProjectOverview({
       if (!session) throw new Error("User is not logged in!");
       const res = await api.post("/dataset", {
         projectName: projectTitle,
+        mode: 1,
         recordingContext: context,
         speakers: speakers.map((s) => {
           return {
@@ -102,6 +104,9 @@ export default function ProjectOverview({
             </Typography>
             <Typography>
               {t("corpus")}: {corpus.name}
+            </Typography>
+            <Typography>
+              {t("language")}: {corpus.language}
             </Typography>
             {context && (
               <Typography>

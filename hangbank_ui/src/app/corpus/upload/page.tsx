@@ -6,22 +6,47 @@ import {
   CircularProgress,
   Grid,
   IconButton,
+  MenuItem,
   Paper,
+  Select,
   TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ArrowCircleUp, Close, Upload } from "@mui/icons-material";
 import api from "@/app/axios";
 import { useSnackbar, Severity } from "@/app/contexts/SnackbarProvider";
+import { LanguageType } from "@/app/project/new/convo_based_fragment";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const { t } = useTranslation("common");
+  const router = useRouter();
+
+  const [availableLanguages, setAvailableLanguages] = useState<LanguageType[]>(
+    []
+  );
+  const [selectedLanguage, setSelectedLanguage] = useState<LanguageType | null>(
+    null
+  );
+  useEffect(() => {
+    async function fetchAvailableLanguages() {
+      try {
+        const response = await api.get<LanguageType[]>("/language");
+        setAvailableLanguages(response.data);
+        setSelectedLanguage(response.data[0] || null);
+      } catch (error) {
+        console.error("Error fetching languages:", error);
+      }
+    }
+
+    fetchAvailableLanguages();
+  }, []);
 
   const [corpusName, setCorpusName] = useState<string>("");
   const [corpusLanguage, setCorpusLanguage] = useState<string>("");
@@ -48,7 +73,7 @@ export default function Home() {
       return;
     }
 
-    if(!corpusName || !corpusLanguage){
+    if (!corpusName || !selectedLanguage) {
       showMessage(t("pls_fill_all_fields"), Severity.error);
       return;
     }
@@ -57,9 +82,9 @@ export default function Home() {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("name", corpusName);
-    formData.append("language", corpusLanguage);
-    if(corpusType) formData.append("type", corpusType);
-    
+    formData.append("language", selectedLanguage.code);
+    if (corpusType) formData.append("type", corpusType);
+
     try {
       api.post("/corpus/upload", formData, {
         headers: {
@@ -67,6 +92,7 @@ export default function Home() {
         },
       });
       console.log("Success");
+      router.push("/");
     } catch (err) {
       console.log("Fail");
     }
@@ -149,7 +175,7 @@ export default function Home() {
               </div>
             </div>
             {/* Text fields */}
-            <div style={{margin: 16, width: "50%"}}>
+            <div style={{ margin: 16, width: "50%" }}>
               <Grid container spacing={2}>
                 {/* Name */}
                 <Grid size={3} />
@@ -171,23 +197,33 @@ export default function Home() {
 
                 {/* Language */}
                 <Grid size={3} />
-                <Grid size={3}><Typography variant="h6">{t("language")}</Typography></Grid>
+                <Grid size={3}>
+                  <Typography variant="h6">{t("language")}</Typography>
+                </Grid>
                 <Grid size={6}>
-                  <TextField
-                    variant="outlined"
-                    size="small"
+                  <Select
                     fullWidth
-                    placeholder="Enter title"
-                    value={corpusLanguage}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      setCorpusLanguage(e.target.value);
+                    value={selectedLanguage ? selectedLanguage.code : ""}
+                    onChange={(e) => {
+                      const language = availableLanguages.find(
+                        (l) => l.code === e.target.value
+                      );
+                      setSelectedLanguage(language || null);
                     }}
-                  />
+                  >
+                    {availableLanguages.map((language) => (
+                      <MenuItem key={language.code} value={language.code}>
+                        {language.name} ({language.code})
+                      </MenuItem>
+                    ))}
+                  </Select>
                 </Grid>
 
                 {/* Type - e.g. good for news reading */}
                 <Grid size={3} />
-                <Grid size={3}><Typography variant="h6">{t("type")}</Typography></Grid>
+                <Grid size={3}>
+                  <Typography variant="h6">{t("type")}</Typography>
+                </Grid>
                 <Grid size={6}>
                   <TextField
                     variant="outlined"

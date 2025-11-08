@@ -58,5 +58,8 @@
     "resume_from_this_block": "Resume recording from this block",
     "project_already_exists": "Project already exists!",
     "no_mic_access": "No microphone access! Enable it in the browser!",
-    "transcription": "Transcription"
+    "transcription": "Transcription",
+    "ai_model": "AI Model",
+    "user": "User",
+    "select_user": "Select User"
 }

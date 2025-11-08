@@ -4,15 +4,18 @@ import {
   Box,
   Button,
   Container,
+  Icon,
   IconButton,
   Menu,
   MenuItem,
+  SvgIcon,
   Toolbar,
   Tooltip,
   Typography,
 } from "@mui/material";
 import { signOut, SignOutParams } from "next-auth/react";
 import { pages } from "next/dist/build/templates/app-page";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 interface PageType {
@@ -45,6 +48,12 @@ export default function Navbar({ signOutCallback }: NavbarProps) {
       >
         <Container sx={{ color: "FFF" }} maxWidth="xl">
           <Toolbar disableGutters>
+          <Image
+            src="/hangbank_logo.svg"
+            alt="Hangbank Logo"
+            width={40}
+            height={40}
+          />
             <Typography
               variant="h6"
               noWrap

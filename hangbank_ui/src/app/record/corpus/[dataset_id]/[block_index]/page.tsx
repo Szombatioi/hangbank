@@ -301,6 +301,7 @@ export default function RecordPage() {
               onAudioUpdate={handleAudioUrlUpdate}
               onRecordingStop={handleAudioBlobUpdate}
               onSpacePress={nextBlock}
+              language={dataset.corpus.language}
             />
           )}
 

@@ -8,7 +8,7 @@ interface CorpusCardProps{
     name: string,
     language: string,
     total_blocks: number,
-    onSelect: (value: {id: string, name: string}) => void;
+    onSelect: (value: {id: string, name: string, language: string}) => void;
 }
 
 export default function CorpusCard({id, name, language, total_blocks, onSelect}: CorpusCardProps) {
@@ -22,7 +22,7 @@ export default function CorpusCard({id, name, language, total_blocks, onSelect}:
                     <Typography variant="body1">{t("total_blocks")}: {total_blocks}</Typography>
                 </div>
                 <div style={{ alignSelf: "end", padding: 0, margin: 0 }}>
-                    <IconButton onClick={() => {onSelect({id, name})}} size="large" color="primary" sx={{ padding: 0, margin: 0 }}>
+                    <IconButton onClick={() => {onSelect({id, name, language})}} size="large" color="primary" sx={{ padding: 0, margin: 0 }}>
                         <PlayArrow />
                     </IconButton>
                 </div>

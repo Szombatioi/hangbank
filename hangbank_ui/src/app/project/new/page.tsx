@@ -23,7 +23,7 @@ import CorpusBlockCard, {
 import api from "@/app/axios";
 import { Severity, useSnackbar } from "@/app/contexts/SnackbarProvider";
 import { useSession } from "next-auth/react";
-import ProjectOverview from "@/app/components/project_overview";
+import CorpusProjectOverview from "@/app/components/corpus_project_overview";
 
 //TODO: add values to Textfields
 
@@ -31,7 +31,7 @@ interface CorpusResultType {
   projectTitle: string;
   speaker: SpeakerType;
   mic: string;
-  corpus: { id: string; name: string };
+  corpus: { id: string; name: string, language: string };
   context?: string;
 }
 
@@ -128,7 +128,6 @@ export default function NewProjectPage() {
                 Corpus based
               </Button>
               <Button
-                disabled //TODO enable once ready
                 onClick={() => {
                   setSelectedMode("convo");
                   setActive("config");
@@ -185,7 +184,7 @@ export default function NewProjectPage() {
                   transition={{ duration: 0.5 }}
                   className="absolute"
                 >
-                  <ProjectOverview 
+                  <CorpusProjectOverview 
                     projectTitle={corpusResult.projectTitle}
                     speakers={[corpusResult.speaker]}
                     corpus={corpusResult.corpus}

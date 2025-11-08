@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateDatasetDto } from './dto/create-dataset.dto';
 import { UpdateDatasetDto } from './dto/update-dataset.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -31,7 +31,7 @@ export class DatasetService {
   //Metadata
   //Empty audio blocks
   async create(createDatasetDto: CreateDatasetDto) {
-    const { projectName, recording_context, corpus_id, speakers, creator_id } =
+    const { projectName, recording_context, corpus_id, speakers, creator_id, mode } =
       createDatasetDto;
 
     // Find corpus
@@ -50,6 +50,7 @@ export class DatasetService {
     const dataset = this.datasetRepository.create({
       name: projectName,
       corpus,
+      mode: mode,
       // metadata: {
       //   recording_context,
       //   speakers,
@@ -143,6 +144,7 @@ export class DatasetService {
     //TODO: maybe this format is not good everywhere, it was intended to return to Project Overview page
     return {
       projectTitle: dataset.name,
+      language: dataset.corpus.language,
       speakers: dataset.metadata.speakers.map((s) => {
         return {
           user: { id: s.user.id, name: s.user.name },

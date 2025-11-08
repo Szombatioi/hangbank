@@ -24,7 +24,7 @@ export interface CorpusBasedFragmentProps {
     projectTitle: string;
     speaker: SpeakerType;
     mic: string;
-    corpus: { id: string; name: string };
+    corpus: { id: string; name: string, language: string };
     context?: string;
   }) => void;
 }
@@ -46,6 +46,7 @@ export default function CorpusBasedFragment({
   const [selectedCorpus, setSelectedCorpus] = useState<{
     id: string;
     name: string;
+    language: string;
   } | null>(null);
 
   const [projectTitle, setProjectTitle] = useState<string>("");

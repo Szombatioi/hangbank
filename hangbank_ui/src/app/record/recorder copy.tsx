@@ -22,6 +22,7 @@ interface RecorderProps {
   onAudioUpdate?: (url: string) => void;
   onRecordingStop: (finalBlob: Blob) => void;
   onSpacePress?: () => void;
+  language: string;
 }
 
 export default function Recorder({
@@ -31,6 +32,7 @@ export default function Recorder({
   onAudioUpdate,
   onRecordingStop,
   onSpacePress,
+  language
 }: RecorderProps) {
   const { t } = useTranslation("common");
 
@@ -74,7 +76,7 @@ export default function Recorder({
     const recognition = new SpeechRecognition();
     recognition.continuous = true; // keep listening
     recognition.interimResults = true; // get partial results
-    recognition.lang = "en-US"; //TODO set by Dataset language
+    recognition.lang = language;
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       //Only transcribe if recording and not paused

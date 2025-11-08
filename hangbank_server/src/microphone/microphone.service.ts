@@ -15,8 +15,8 @@ export class MicrophoneService {
     );
   }
 
-  findAll() {
-    return `This action returns all microphone`;
+  async findAll() {
+    return await this.microphoneRepository.find();
   }
 
   async findOne(deviceId: string) {

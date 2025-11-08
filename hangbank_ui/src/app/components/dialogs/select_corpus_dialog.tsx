@@ -10,7 +10,7 @@ import CorpusHeaderDto from "@/app/dto/corpus_header";
 interface SelectCorpusDialogProps {
     open: boolean;
     onClose: () => void;
-    onSelect: (value: {id: string, name: string}) => void;
+    onSelect: (value: {id: string, name: string, language: string}) => void;
 }
 
 export default function SelectCorpusDialog({ open, onClose, onSelect }: SelectCorpusDialogProps) {

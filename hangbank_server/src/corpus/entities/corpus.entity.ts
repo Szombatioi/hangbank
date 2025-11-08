@@ -16,9 +16,11 @@ export class Corpus {
     @Column({nullable: true})
     category: string; //e.g. News reading, Storytelling etc. -> but this is not mandatory
 
-    @Column({ nullable: false })
+    //nullable because in Mode 2
+    @Column({ nullable: true })
     corpus_minio_link: string;
 
+    //When using mode 2, the corpus_blocks are initially empty, then filled during the talk with the AI model
     @OneToMany(() => CorpusBlock, (corpusBlock) => corpusBlock.corpus, { onDelete: 'CASCADE' })
     corpus_blocks: CorpusBlock[];
 

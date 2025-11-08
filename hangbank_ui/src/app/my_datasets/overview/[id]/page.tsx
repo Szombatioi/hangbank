@@ -1,9 +1,9 @@
 "use client";
 
 import api from "@/app/axios";
-import ProjectOverview, {
+import CorpusProjectOverview, {
   CorpusHeaderType,
-} from "@/app/components/project_overview";
+} from "@/app/components/corpus_project_overview";
 import { SpeakerType } from "@/app/project/new/corpus_based_fragment";
 import { CorpusBlockType } from "@/app/project/new/page";
 import { CircularProgress } from "@mui/material";
@@ -47,7 +47,7 @@ export default function OverviewPage() {
             </>
           ) : (
             <>
-              <ProjectOverview
+              <CorpusProjectOverview
                 projectTitle={dataset.projectTitle}
                 speakers={dataset.speakers}
                 corpus={dataset.corpus}

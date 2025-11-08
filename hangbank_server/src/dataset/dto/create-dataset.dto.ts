@@ -1,6 +1,9 @@
+import { RecordingMode } from "../entities/dataset.entity";
+
 export class CreateDatasetDto {
     projectName: string;
     creator_id: string;
+    mode: RecordingMode;
 
     //---Metadata---
     recording_context?: string;

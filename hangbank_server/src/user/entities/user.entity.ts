@@ -24,7 +24,7 @@ export class User {
     @Column( { nullable: false } )
     birthdate: Date;
 
-    @Column( { nullable: false, type: "enum", enum: Gender,  } )
+    @Column( { nullable: false, type: "enum", enum: Gender } )
     gender: Gender;
 
     @OneToMany(() => AudioBlock, (audioBlock) => audioBlock.user)

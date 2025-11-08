@@ -25,7 +25,7 @@ export class Metadata {
   speakers: Speaker[]; //If using Mode 1, it will be a single user
 
   // @Column()
-  // language: string; //TODO: make it a table?
+  // language: string;
 
   @Column({ nullable: true })
   recording_context: string;

@@ -20,6 +20,12 @@ import { SpeakerModule } from './speaker/speaker.module';
 import { MicrophoneModule } from './microphone/microphone.module';
 import { Microphone } from './microphone/entities/microphone.entity';
 import { Speaker } from './speaker/entities/speaker.entity';
+import { AiModelModule } from './ai_model/ai_model.module';
+import { AiChatHistoryModule } from './ai_chat_history/ai_chat_history.module';
+import { AiModel } from './ai_model/entities/ai_model.entity';
+import { AiChatHistory } from './ai_chat_history/entities/ai_chat_history.entity';
+import { LanguageModule } from './language/language.module';
+import { Language } from './language/entities/language.entity';
 
 @Module({
   imports: [
@@ -33,7 +39,7 @@ import { Speaker } from './speaker/entities/speaker.entity';
       username: process.env.DB_USER,
       password: process.env.DB_PASS,
       database: process.env.DB_NAME,
-      entities: [User, Metadata, Dataset, AudioBlock, CorpusBlock, Corpus, Microphone, Speaker],
+      entities: [User, Metadata, Dataset, AudioBlock, CorpusBlock, Corpus, Microphone, Speaker, AiModel, AiChatHistory, Language],
       synchronize: true, //TODO: replace this with migrations in production
     }),
     MinioModule,
@@ -44,7 +50,10 @@ import { Speaker } from './speaker/entities/speaker.entity';
     CorpusBlockModule,
     CorpusModule,
     SpeakerModule,
-    MicrophoneModule
+    MicrophoneModule,
+    AiModelModule,
+    AiChatHistoryModule,
+    LanguageModule
   ],
   controllers: [AppController],
   providers: [AppService],

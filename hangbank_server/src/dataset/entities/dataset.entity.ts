@@ -4,6 +4,10 @@ import { Metadata } from "src/metadata/entities/metadata.entity";
 import { User } from "src/user/entities/user.entity";
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 
+export enum RecordingMode{
+    Corpus = 1,
+    Conversation = 2
+}
 @Entity()
 export class Dataset {
     @PrimaryGeneratedColumn("uuid")
@@ -12,7 +16,8 @@ export class Dataset {
     @Column({nullable: false})
     name: string;
 
-    //TODO: add Mode? (Convo based might be different...)
+    @Column({nullable: false, type: "enum", enum: RecordingMode})
+    mode: RecordingMode;
 
     // @Column({ nullable: false })
     // corpus_minio_link: string;

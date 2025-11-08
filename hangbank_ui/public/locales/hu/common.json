@@ -58,5 +58,8 @@
     "resume_from_this_block": "Felvétel folytatása ettől a blokktól",
     "project_already_exists": "Már létezik ez a projekt!",
     "no_mic_access": "Nincs mikrofon hozzáférés! Engedélyezd a böngészőben.",
-    "transcription": "Átirat"
+    "transcription": "Átirat",
+    "ai_model": "MI modell",
+    "user": "Felhasználó",
+    "select_user": "Felhasználó kiválasztása"
 }
