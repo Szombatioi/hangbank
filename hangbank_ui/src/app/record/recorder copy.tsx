@@ -502,6 +502,7 @@ export default function Recorder({
                 maxHeight: 512,
                 display: "flex",
                 justifyContent: "center",
+                textWrap: "wrap",
               }}
             >
               <Paper
@@ -514,6 +515,7 @@ export default function Recorder({
                   border: "2px solid #ccc",
                   justifyContent: "space-between",
                   alignItems: "space-between",
+                  textWrap: "wrap",
                 }}
               >
                 <Typography>{transcript + wsi_transcript}</Typography>

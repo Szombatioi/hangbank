@@ -61,5 +61,7 @@
     "transcription": "Transcription",
     "ai_model": "AI Model",
     "user": "User",
-    "select_user": "Select User"
+    "select_user": "Select User",
+    "corpus_uploaded_success": "Corpus uploaded successfully",
+    "choose_a_topic": "Choose a topic"
 }

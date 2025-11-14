@@ -92,6 +92,7 @@ export default function Home() {
         },
       });
       console.log("Success");
+      showMessage(t("corpus_uploaded_success"), Severity.success);
       router.push("/");
     } catch (err) {
       console.log("Fail");

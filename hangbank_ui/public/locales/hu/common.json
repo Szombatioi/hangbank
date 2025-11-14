@@ -61,5 +61,7 @@
     "transcription": "Átirat",
     "ai_model": "MI modell",
     "user": "Felhasználó",
-    "select_user": "Felhasználó kiválasztása"
+    "select_user": "Felhasználó kiválasztása",
+    "corpus_uploaded_success": "A korpusz sikeresen feltöltve",
+    "choose_a_topic": "Válasszon témát"
 }
