@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateCorpusBlockDto } from './dto/create-corpus_block.dto';
 import { UpdateCorpusBlockDto } from './dto/update-corpus_block.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -22,12 +22,34 @@ export class CorpusBlockService {
     return `This action returns all corpusBlock`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} corpusBlock`;
+  async findOneById(id: string) {
+    const corpusBlock = await this.corpusBlockRepository.findOne({ 
+          where: {id},
+          relations: {corpus: true}
+        });
+    
+        if(!corpusBlock) throw new NotFoundException("Corpus block not found with ID: " + id);
+    
+        return corpusBlock;
   }
 
-  update(id: number, updateCorpusBlockDto: UpdateCorpusBlockDto) {
-    return `This action updates a #${id} corpusBlock`;
+  async update(id: string, updateCorpusBlockDto: UpdateCorpusBlockDto) {
+    const corpusBlock = await this.corpusBlockRepository.findOne({where: {id}});
+    if(!corpusBlock) throw new NotFoundException("Corpus block not found with id", id);
+
+    let anyChanges: boolean = false;
+    const { status } = updateCorpusBlockDto;
+    if(status){
+      corpusBlock.status = status;
+      console.log("New status for corpus block: ", status);
+      anyChanges = true;
+    }
+
+    if(anyChanges){
+      console.log("Saved changes for corpus block");
+      await this.corpusBlockRepository.save(corpusBlock);
+    }
+
   }
 
   remove(id: number) {

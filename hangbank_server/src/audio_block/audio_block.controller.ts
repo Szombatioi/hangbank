@@ -1,15 +1,22 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { AudioBlockService } from './audio_block.service';
 import { CreateAudioBlockDto } from './dto/create-audio_block.dto';
 import { UpdateAudioBlockDto } from './dto/update-audio_block.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('audio-block')
 export class AudioBlockController {
   constructor(private readonly audioBlockService: AudioBlockService) {}
 
   @Post()
-  create(@Body() createAudioBlockDto: CreateAudioBlockDto) {
-    return this.audioBlockService.create(createAudioBlockDto);
+  @UseInterceptors(FileInterceptor('file', {
+    storage: process.env.NODE_ENV === 'development' ? undefined : undefined, // Alapértelmezésben a memóriát használja a NestJS/Multer
+    limits: {
+        fileSize: 50 * 1024 * 1024, //Max 50Mb
+    },
+}))
+  create(@Body() createAudioBlockDto: CreateAudioBlockDto, @UploadedFile() audioBlob: Express.Multer.File) {
+    return this.audioBlockService.create(createAudioBlockDto, audioBlob);
   }
 
   @Get()

@@ -33,6 +33,7 @@ interface CorpusResultType {
   mic: string;
   corpus: { id: string; name: string, language: string };
   context?: string;
+  samplingFrequency: number;
 }
 
 export interface CorpusBlockType {
@@ -73,6 +74,7 @@ export default function NewProjectPage() {
       return;
     }
     const blocks = cblocks.data.sort((a,b) => a.sequence - b.sequence);
+    blocks.forEach((b) => b.status = 0);
     setCorpusBlocks(blocks);
 
     setActive("overview");
@@ -190,6 +192,7 @@ export default function NewProjectPage() {
                     corpus={corpusResult.corpus}
                     context={corpusResult.context}
                     corpusBlocks={corpusBlocks} 
+                    samplingFrequency={corpusResult.samplingFrequency}
                   />
                 </motion.div>
               </>

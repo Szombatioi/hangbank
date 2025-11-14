@@ -1,5 +1,6 @@
 import { CorpusBlock } from "src/corpus_block/entities/corpus_block.entity";
 import { Dataset } from "src/dataset/entities/dataset.entity";
+import { Speaker } from "src/speaker/entities/speaker.entity";
 import { User } from "src/user/entities/user.entity";
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
@@ -15,10 +16,10 @@ export class AudioBlock {
     @ManyToOne(() => Dataset, (dataset) => dataset.id, { onDelete: 'CASCADE' })
     dataset: Dataset;
 
-    @ManyToOne(() => User, (user) => user.id) 
-    user: User; //We need User here, because of Mode 2 (when 2 or more people have conversation)
+    @ManyToOne(() => Speaker, (speaker) => speaker.id) 
+    speaker: Speaker; //We need User here, because of Mode 2 (when 2 or more people have conversation)
 
     //Corpus block ID
-    @ManyToOne(() => CorpusBlock, (corpusBlock) => corpusBlock.id)
+    @ManyToOne(() => CorpusBlock, (corpusBlock) => corpusBlock.id, {nullable: true}) //Nullable because of Mode 2
     corpusBlock: CorpusBlock;
 }

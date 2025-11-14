@@ -22,9 +22,9 @@ export interface CorpusBlockCardProps {
 }
 
 export enum CorpusBlockStatus {
-  warning,
-  todo,
-  done,
+  todo = 0,
+  warning = 1,
+  done = 2,
 }
 
 export default function CorpusBlockCard({

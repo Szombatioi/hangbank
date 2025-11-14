@@ -63,5 +63,9 @@
     "user": "Felhasználó",
     "select_user": "Felhasználó kiválasztása",
     "corpus_uploaded_success": "A korpusz sikeresen feltöltve",
-    "choose_a_topic": "Válasszon témát"
+    "choose_a_topic": "Válasszon témát",
+    "sample_frequency": "Mintavételi frekvencia",
+    "dataset": "Adathalmaz",
+    "could_not_save_progress": "Nem sikerült menteni a folyamatot!",
+    "errors_occured": "Hibák történtek"
 }

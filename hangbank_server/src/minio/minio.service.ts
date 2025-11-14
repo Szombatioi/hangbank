@@ -100,7 +100,7 @@ export class MinioService {
     const blockIndexFromNum = Number(blockIndexFrom);
     const blockIndexToNum = Number(blockIndexTo);
 
-    console.log(`Minio blocks from ${blockIndexFromNum} to ${blockIndexToNum}`)
+    // console.log(`Minio blocks from ${blockIndexFromNum} to ${blockIndexToNum}`)
     if(blockIndexFromNum > blockIndexToNum || blockIndexFromNum < 0){
       console.error("blockIndexFromNum: ", blockIndexFromNum);
       console.error("blockIndexToNum: ", blockIndexToNum);

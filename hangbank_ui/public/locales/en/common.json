@@ -63,5 +63,9 @@
     "user": "User",
     "select_user": "Select User",
     "corpus_uploaded_success": "Corpus uploaded successfully",
-    "choose_a_topic": "Choose a topic"
+    "choose_a_topic": "Choose a topic",
+    "sample_frequency": "Sampling frequency",
+    "dataset": "Dataset",
+    "could_not_save_progress": "Could not save progress",
+    "errors_occured": "Errors have occured"
 }

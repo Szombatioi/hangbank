@@ -1,7 +1,11 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from './entities/user.entity';
+import { Gender, User } from './entities/user.entity';
 import { CreateUserDto } from './entities/createUser.dto';
 import * as bcrypt from 'bcrypt';
 
@@ -17,14 +21,14 @@ export class UserService {
   }
 
   async findOneById(id: string): Promise<User> {
-    const user = await this.userRepository.findOne({where: {id}})
-    if(!user) throw new NotFoundException();
+    const user = await this.userRepository.findOne({ where: { id } });
+    if (!user) throw new NotFoundException();
     return user;
   }
 
   async findOneByEmail(email: string): Promise<User> {
-    const user = await this.userRepository.findOne({where: {email}})
-    if(!user) throw new NotFoundException();
+    const user = await this.userRepository.findOne({ where: { email } });
+    if (!user) throw new NotFoundException();
     return user;
   }
 
@@ -41,9 +45,36 @@ export class UserService {
 
     // console.log("Hash ok")
     // console.log({...data, password: hashedPassword})
-    return await this.userRepository.save(this.userRepository.create({
-      ...data,
-      password: hashedPassword,
-    }));
+    return await this.userRepository.save(
+      this.userRepository.create({
+        ...data,
+        password: hashedPassword,
+      }),
+    );
+  }
+
+  async seedAdmin() {
+    const existingUsers = await this.userRepository.find();
+    const usersToSeed: CreateUserDto[] = [
+      {
+        username: 'admin',
+        name: 'Admin',
+        birthdate: new Date(),
+        gender: Gender.Other,
+        email: 'admin@gmail.com',
+        password: 'admin',
+      },
+    ];
+
+    for (const userData of usersToSeed) {
+      if (existingUsers.some((u) => u.email === userData.email)) {
+        console.log(`User already exists: ${userData.name}`);
+        continue;
+      }
+      const user = await this.createUser(userData);
+      console.log(`Seeded user: ${user.name}`);
+    }
+
+    console.log('Users seeding completed.');
   }
 }

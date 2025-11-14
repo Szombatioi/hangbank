@@ -1,6 +1,7 @@
 "use client";
 import SelectCorpusDialog from "@/app/components/dialogs/select_corpus_dialog";
 import { useSnackbar } from "@/app/contexts/SnackbarProvider";
+import { SampleRate, sampleRates } from "@/app/record/sampleRateType";
 import { Search } from "@mui/icons-material";
 import {
   Box,
@@ -24,14 +25,17 @@ export interface CorpusBasedFragmentProps {
     projectTitle: string;
     speaker: SpeakerType;
     mic: string;
-    corpus: { id: string; name: string, language: string };
+    corpus: { id: string; name: string; language: string };
     context?: string;
+    samplingFrequency: number;
   }) => void;
 }
 
 export interface SpeakerType {
-  user: { id: string, name: string };
-  mic: {deviceId: string, deviceLabel: string};
+  id: number;
+  user: { id: string; name: string };
+  mic: { deviceId: string; deviceLabel: string };
+  samplingFrequency: number;
 }
 
 export default function CorpusBasedFragment({
@@ -42,6 +46,7 @@ export default function CorpusBasedFragment({
   const { showMessage } = useSnackbar();
   const [mics, setMics] = useState<MediaDeviceInfo[]>([]);
   const [selectedMic, setSelectedMic] = useState<string>("");
+  const [selectedFrequency, setSelectedFrequency] = useState<SampleRate>(22500);
   const [error, setError] = useState<string | null>(null);
   const [selectedCorpus, setSelectedCorpus] = useState<{
     id: string;
@@ -59,7 +64,8 @@ export default function CorpusBasedFragment({
       !selectedMic ||
       selectedMic.length <= 0 ||
       !selectedCorpus ||
-      !speaker
+      !speaker ||
+      !selectedFrequency
     ) {
       showMessage(t("pls_fill_all_fields"), "error");
       return;
@@ -72,6 +78,7 @@ export default function CorpusBasedFragment({
       mic: selectedMicName,
       corpus: selectedCorpus,
       context: context,
+      samplingFrequency: selectedFrequency,
     });
   };
 
@@ -92,13 +99,19 @@ export default function CorpusBasedFragment({
           setSelectedMic(audioInputs[0].deviceId);
           //To fill Speaker input
           if (session?.user?.id && session.user.name) {
-            setSpeaker({ user: {id: session.user.id, name: session.user.name }, mic: {deviceId: audioInputs[0].deviceId, deviceLabel: audioInputs[0].label}}); //TODO:
+            setSpeaker({
+              id: 0,
+              user: { id: session.user.id, name: session.user.name },
+              mic: {
+                deviceId: audioInputs[0].deviceId,
+                deviceLabel: audioInputs[0].label,
+              },
+              samplingFrequency: 0
+            }); //TODO:
           }
         }
 
         stream.getTracks().forEach((track) => track.stop());
-
-        
 
         // const permission = await navigator.permissions.query({ name: "microphone" as PermissionName });
         // if (permission.state === "denied") {
@@ -158,7 +171,7 @@ export default function CorpusBasedFragment({
                 fullWidth
                 placeholder={t("enter_speaker_name")}
                 disabled
-                value={speaker ? speaker.user.name+" (You)" : ""}
+                value={speaker ? speaker.user.name + " (You)" : ""}
               />
             </Grid>
             <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
@@ -178,6 +191,26 @@ export default function CorpusBasedFragment({
                 {mics.map((mic) => (
                   <MenuItem key={mic.deviceId} value={mic.deviceId}>
                     {mic.label || `Microphone ${mic.deviceId}`}
+                  </MenuItem>
+                ))}
+              </Select>
+            </Grid>
+
+            {/* Sample frequency */}
+            <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
+              <Typography sx={{ width: 200, fontWeight: 500 }}>
+                {t("sample_frequency")}:
+              </Typography>
+            </Grid>
+            <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
+              <Select
+                value={selectedFrequency}
+                fullWidth
+                onChange={(e) => setSelectedFrequency(e.target.value)}
+              >
+                {sampleRates.map((s) => (
+                  <MenuItem key={s} value={s}>
+                    {s} Hz
                   </MenuItem>
                 ))}
               </Select>

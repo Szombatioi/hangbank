@@ -17,17 +17,19 @@ import WaveSurfer from "wavesurfer.js";
 
 interface RecorderProps {
   selectedDeviceId: string | null;
+  sampleRate: number;
   save_freq_ms: number;
   useTranscript: boolean;
   onAudioUpdate?: (url: string) => void;
   onRecordingStop: (finalBlob: Blob, transcription?: string) => void;
-  onSpacePress?: () => void;
+  onSpacePress?: (blob: Blob) => void;
   onTranscriptUpdate?: (text: string) => void;
   language: string;
 }
 
 export default function Recorder({
   selectedDeviceId,
+  sampleRate,
   save_freq_ms,
   useTranscript,
   onAudioUpdate,
@@ -231,7 +233,9 @@ export default function Recorder({
       const constraints = {
         audio: {
           deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined,
+          sampleRate: { ideal: sampleRate }
         },
+      
       };
 
       const newStream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -239,6 +243,7 @@ export default function Recorder({
 
       const newRecorder = new MediaRecorder(newStream, {
         mimeType: "audio/webm; codecs=opus",
+        bitsPerSecond: 512000, //512 kbps
       });
       setRecorder(newRecorder);
 
@@ -388,7 +393,12 @@ export default function Recorder({
       ) {
         event.preventDefault(); // prevents scrolling the page
         console.log("Spacebar pressed - moving to next block");
-        if (onSpacePress) onSpacePress();
+        if (onSpacePress) {
+          onSpacePress(new Blob(audioChunksRef.current, {
+            type: "audio/webm",
+          }));
+          console.log("Sending audio block back to page")
+        };
       }
     };
 
@@ -489,7 +499,7 @@ export default function Recorder({
         </div>
       </Paper>
 
-      {/* TODO  transcript here*/}
+      {/* Transcript */}
       {useTranscript && (
         <>
           <div style={{ marginTop: 8, marginBottom: 8 }}>

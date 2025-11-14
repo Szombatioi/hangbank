@@ -24,12 +24,12 @@ export class CorpusBlockController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.corpusBlockService.findOne(+id);
+    return this.corpusBlockService.findOneById(id);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateCorpusBlockDto: UpdateCorpusBlockDto) {
-    return this.corpusBlockService.update(+id, updateCorpusBlockDto);
+    return this.corpusBlockService.update(id, updateCorpusBlockDto);
   }
 
   @Delete(':id')

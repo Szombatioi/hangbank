@@ -27,8 +27,8 @@ export class User {
     @Column( { nullable: false, type: "enum", enum: Gender } )
     gender: Gender;
 
-    @OneToMany(() => AudioBlock, (audioBlock) => audioBlock.user)
-    audioBlocks: AudioBlock[];
+    // @OneToMany(() => AudioBlock, (audioBlock) => audioBlock)
+    // audioBlocks: AudioBlock[];
 
     @OneToMany(() => Dataset, (d) => d.creator)
     datasets: Dataset[];

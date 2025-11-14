@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { AiModelService } from './ai_model/ai_model.service';
 import { LanguageService } from './language/language.service';
+import { UserService } from './user/user.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -18,6 +19,10 @@ async function bootstrap() {
   console.log("Seeding Languages on startup...");
   const languageService = app.get(LanguageService);
   await languageService.seedLanguages();
+
+  console.log("Seed admin")
+  const userService = app.get(UserService);
+  await userService.seedAdmin();
 
   await app.listen(process.env.PORT ?? 3001);
 }

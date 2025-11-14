@@ -31,7 +31,7 @@ You can view your Object Storage at `http://localhost:9001/`
 After logging in via admin credentials, you can create your bucker. Name it e.g. `mybucket`.
 
 # Create PostgreSQL Database
-Use this command: `$ docker run --name dev-hangbank -e POSTGRES_USER=<USERNAME> -e POSTGRES_PASSWORD=<PASSWORD> -e POSTGRES_DB=hangbank_dev -p 5432:5432 -d postgres`
+Use this command: `$ docker run --name dev-hangbank -e POSTGRES_USER=hangbank -e POSTGRES_PASSWORD=hangbank -e POSTGRES_DB=hangbank_dev -p 5432:5432 -d postgres`
 
 Make sure that USERNAME and PASSWORD are set to "hangbank".
 

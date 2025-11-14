@@ -2,7 +2,7 @@ import { Mic, Save } from "@mui/icons-material";
 import { Box, Paper, Typography, Button, Grid } from "@mui/material";
 import { t } from "i18next";
 import CorpusBlockCard from "./corpus_block_card";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import api from "../axios";
 import { Severity, useSnackbar } from "../contexts/SnackbarProvider";
 import { useTranslation } from "react-i18next";
@@ -23,7 +23,7 @@ interface CorpusProjectOverviewProps {
   corpus: CorpusHeaderType;
   context?: string;
   corpusBlocks: CorpusBlockType[];
-
+  samplingFrequency: number;
   projectId?: string;
 }
 
@@ -34,19 +34,27 @@ export default function CorpusProjectOverview({
   context,
   corpusBlocks,
   projectId,
+  samplingFrequency
 }: CorpusProjectOverviewProps) {
   const { t } = useTranslation("common");
   const router = useRouter();
   const { showMessage } = useSnackbar();
   const { data: session } = useSession();
   const [saveButtonDisabled, setSaveButtonDisabled] = useState<boolean>(false);
+  const projectIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if(projectId != null) projectIdRef.current = projectId;
+    console.log("ProjectId provided: ", projectId);
+  }, []);
 
   const startRecordingPage = async (index: number = 0) => {
-    if(projectId) {
+    if(projectIdRef.current !== null) {
       // showMessage(t("project_already_exists"), Severity.warning);
-      router.push(`/record/corpus/${projectId}/${index}`);
+      router.push(`/record/corpus/${projectIdRef.current}/${index}`);
       return;
     }
+    console.log("Saving project before going to next page")
     const resDatasetId = await saveProject();
     router.push(`/record/corpus/${resDatasetId}/${index}`);
   }
@@ -70,11 +78,16 @@ export default function CorpusProjectOverview({
             id: s.user.id,
             mic_deviceId: s.mic.deviceId,
             mic_label: s.mic.deviceLabel,
+            samplingFrequency: samplingFrequency,
           };
         }),
         corpus_id: corpus.id,
         creator_id: session.user.id,
       });
+      projectIdRef.current = res.data.id;
+      console.log("projectId", projectId);
+      console.log("res.data", res.data);
+
       showMessage(t("project_saved"), Severity.success);
       setSaveButtonDisabled(true);
       return res.data.id;
@@ -101,6 +114,9 @@ export default function CorpusProjectOverview({
             {/*TODO: speaker.name or ID */}
             <Typography>
               {t("microphone")}: {speakers[0].mic.deviceLabel} {/*TODO: use as list.  Perhaps replace user, mic with Speaker entity */}
+            </Typography>
+            <Typography>
+              {t("sample_frequency")}: {samplingFrequency} {/*TODO: use as list.  Perhaps replace user, mic with Speaker entity */}
             </Typography>
             <Typography>
               {t("corpus")}: {corpus.name}

@@ -19,7 +19,7 @@ export class SpeakerController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.speakerService.findOne(+id);
+    return this.speakerService.findOneById(+id);
   }
 
   @Patch(':id')

@@ -11,6 +11,8 @@ import { DatasetDisplay } from './dto/display-dataset.dto';
 import { MicrophoneService } from 'src/microphone/microphone.service';
 import { Speaker } from 'src/speaker/entities/speaker.entity';
 import { Microphone } from 'src/microphone/entities/microphone.entity';
+import { sample } from 'rxjs';
+import { CorpusBlockStatus } from 'src/corpus_block/entities/corpus_block.entity';
 
 @Injectable()
 export class DatasetService {
@@ -35,18 +37,18 @@ export class DatasetService {
       createDatasetDto;
 
     // Find corpus
-    console.log('Find corpus');
+    // console.log('Find corpus');
     const corpus = await this.corpusService.findOne(corpus_id);
     if (!corpus)
       throw new NotFoundException('Corpus not found with ID: ' + corpus_id);
 
     //Find creator
-    console.log('Find creator');
+    // console.log('Find creator');
     const creator = await this.userService.findOneById(creator_id);
     if (!creator)
       throw new NotFoundException('User not found with ID: ' + creator_id);
 
-    console.log('Create dataset');
+    // console.log('Create dataset');
     const dataset = this.datasetRepository.create({
       name: projectName,
       corpus,
@@ -59,7 +61,7 @@ export class DatasetService {
     });
     await this.datasetRepository.save(dataset);
 
-    console.log('Create metadata');
+    // console.log('Create metadata');
     const metadata = await this.metadataRepository.save(
       await this.metadataRepository.create({
         recording_context,
@@ -68,7 +70,7 @@ export class DatasetService {
     );
 
     // Find speakers
-    console.log('Find speakers');
+    // console.log('Find speakers');
     const speaker_entities: Speaker[] = await Promise.all(
       speakers.map(async (s) => {
         const speaker = await this.userService.findOneById(s.id);
@@ -83,11 +85,12 @@ export class DatasetService {
           //NotFound
           mic = await this.micService.create(s.mic_deviceId, s.mic_label);
         }
-        console.log('Create speaker entity');
+        // console.log('Create speaker entity');
         return await this.speakerRepository.create({
           user: speaker,
           microphone: mic,
           metadata: metadata,
+          samplingFrequency: s.samplingFrequency
         });
       }),
     );
@@ -113,7 +116,7 @@ export class DatasetService {
     });
 
     const datasetDisplays: DatasetDisplay[] = datasets.map((dataset) => {
-      console.log(dataset.metadata?.speakers);
+      // console.log(dataset.metadata?.speakers);
       return {
         id: dataset.id,
         title: dataset.name,
@@ -133,22 +136,26 @@ export class DatasetService {
       where: { id },
       relations: {
         corpus: { corpus_blocks: true },
+        audioBlocks: {corpusBlock: true},
         metadata: { speakers: { user: true, microphone: true } },
       },
     });
     if (!dataset)
       throw new NotFoundException('Dataset not found with ID: ' + id);
 
-    console.log(dataset.metadata.speakers);
+    // console.log(dataset.metadata.speakers);
 
     //TODO: maybe this format is not good everywhere, it was intended to return to Project Overview page
     return {
+      id: dataset.id,
       projectTitle: dataset.name,
       language: dataset.corpus.language,
       speakers: dataset.metadata.speakers.map((s) => {
         return {
+          id: s.id,
           user: { id: s.user.id, name: s.user.name },
           mic: { deviceId: s.microphone.deviceId, deviceLabel: s.microphone.label },
+          samplingFrequency: s.samplingFrequency
         };
       }),
       corpus: { id: dataset.corpus.id, name: dataset.corpus.name },

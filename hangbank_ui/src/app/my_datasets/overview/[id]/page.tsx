@@ -11,6 +11,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export interface DatasetType {
+  id: string;
   projectTitle: string;
   speakers: SpeakerType[];
   corpus: CorpusHeaderType;
@@ -54,6 +55,7 @@ export default function OverviewPage() {
                 context={dataset.context}
                 corpusBlocks={dataset.corpusBlocks}
                 projectId={params.id}
+                samplingFrequency={dataset.speakers[0].samplingFrequency}
               />
             </>
           )}

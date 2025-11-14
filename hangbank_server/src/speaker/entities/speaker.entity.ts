@@ -22,4 +22,7 @@ export class Speaker {
 
   @ManyToOne(() => Metadata, (metadata) => metadata.speakers)
   metadata: Metadata;
+
+  @Column()
+  samplingFrequency: number;
 }

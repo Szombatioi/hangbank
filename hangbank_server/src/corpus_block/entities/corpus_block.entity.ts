@@ -2,9 +2,9 @@ import { Corpus } from 'src/corpus/entities/corpus.entity';
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 export enum CorpusBlockStatus {
-  warning,
-  todo,
-  done,
+  todo = 0,
+  warning = 1,
+  done = 2,
 }
 @Entity()
 export class CorpusBlock {

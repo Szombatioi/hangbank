@@ -2,6 +2,7 @@
 
 import api from "@/app/axios";
 import { Severity, useSnackbar } from "@/app/contexts/SnackbarProvider";
+import { SampleRate, sampleRates } from "@/app/record/sampleRateType";
 import { Search } from "@mui/icons-material";
 import {
   Box,
@@ -39,17 +40,19 @@ interface Mic {
 }
 
 export interface ConvoBasedFragmentProps {
-  invokeNextStep: (val: {
-    
-  }) => void;
+  invokeNextStep: (val: {}) => void;
 }
 
-export default function ConvoBasedFragment({invokeNextStep}: ConvoBasedFragmentProps) {
+export default function ConvoBasedFragment({
+  invokeNextStep,
+}: ConvoBasedFragmentProps) {
   const { showMessage } = useSnackbar();
   //TODO: handle error if the AI model is unavailable (e.g. when token limit is reached)
 
   const [availableModels, setAvailableModels] = useState<AIModel[]>([]);
-  const [availableLanguages, setAvailableLanguages] = useState<LanguageType[]>([]);
+  const [availableLanguages, setAvailableLanguages] = useState<LanguageType[]>(
+    []
+  );
   const [availableUsers, setAvailableUsers] = useState<User[]>([]);
   const [availableMics, setAvailableMics] = useState<Mic[]>([]);
   //When configuring this project, we do not set the Dataset title here, only when we choose the topic
@@ -59,6 +62,7 @@ export default function ConvoBasedFragment({invokeNextStep}: ConvoBasedFragmentP
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageType | null>(
     null
   );
+  const [selectedFrequency, setSelectedFrequency] = useState<SampleRate>(22500);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedMic, setSelectedMic] = useState<Mic | null>(null);
 
@@ -112,13 +116,13 @@ export default function ConvoBasedFragment({invokeNextStep}: ConvoBasedFragmentP
   }, []);
 
   const handleButtonClick = () => {
-    if(!selectedModel || !selectedLanguage || !selectedUser || !selectedMic){
+    if (!selectedModel || !selectedLanguage || !selectedUser || !selectedMic) {
       showMessage(t("pls_fill_all_fields"), Severity.error);
       return;
     }
 
     invokeNextStep({});
-  }
+  };
 
   return (
     <>
@@ -217,7 +221,7 @@ export default function ConvoBasedFragment({invokeNextStep}: ConvoBasedFragmentP
               </Typography>
             </Grid>
             <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
-            <Select
+              <Select
                 fullWidth
                 value={selectedMic ? selectedMic.deviceId : ""}
                 displayEmpty
@@ -234,6 +238,26 @@ export default function ConvoBasedFragment({invokeNextStep}: ConvoBasedFragmentP
                 {availableMics.map((mic) => (
                   <MenuItem key={mic.deviceId} value={mic.deviceId}>
                     {mic.label} ({mic.deviceId.slice(0, 10) + "..."})
+                  </MenuItem>
+                ))}
+              </Select>
+            </Grid>
+
+            {/* Sample frequency */}
+            <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
+              <Typography sx={{ width: 200, fontWeight: 500 }}>
+                {t("sample_frequency")}:
+              </Typography>
+            </Grid>
+            <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
+              <Select
+                value={selectedFrequency}
+                fullWidth
+                onChange={(e) => setSelectedFrequency(e.target.value)}
+              >
+                {sampleRates.map((s) => (
+                  <MenuItem key={s} value={s}>
+                    {s} Hz
                   </MenuItem>
                 ))}
               </Select>

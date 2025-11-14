@@ -18,5 +18,6 @@ import { MicrophoneModule } from 'src/microphone/microphone.module';
   ],
   controllers: [DatasetController],
   providers: [DatasetService],
+  exports: [DatasetService]
 })
 export class DatasetModule {}

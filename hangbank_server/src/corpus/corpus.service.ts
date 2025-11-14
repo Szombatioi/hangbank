@@ -30,7 +30,7 @@ export class CorpusService {
     //Step 1. Uploading Corpus to MinIO
     const result = await this.minioService.uploadObject(file, 'corpus');
 
-    console.log('Corpus MinIO success');
+    // console.log('Corpus MinIO success');
 
     //Generate Corpus entity in DB
     const corpus = this.corpusRepository.create({
@@ -40,7 +40,7 @@ export class CorpusService {
       corpus_minio_link: result.filename,
     });
 
-    console.log('Corpus entity created');
+    // console.log('Corpus entity created');
 
     //Download the uploaded file temporarily
     const tempPath = path.join(
@@ -53,7 +53,7 @@ export class CorpusService {
       file.originalname,
     );
     fs.writeFileSync(tempPath, file.buffer);
-    console.log('Temp file downloaded');
+    // console.log('Temp file downloaded');
 
     //Step 2. Generate Corpus Blocks from Corpus (((via Python script)))
     //Path of the corpus_converter.py script
@@ -117,8 +117,8 @@ export class CorpusService {
     //     }
     //   });
     // });
-    console.log('Python script finished execution');
-    console.log(blockFileNames);
+    // console.log('Python script finished execution');
+    // console.log(blockFileNames);
     await this.corpusRepository.save(corpus);
     //Generate CorpusBlock entities in DB for each filename the Python script returned
     await blockFileNames.forEach(async (blockFileName, index) => {
@@ -132,14 +132,14 @@ export class CorpusService {
         'output',
         blockFileName,
       );
-      console.log("Start file load into buffer");
+      // console.log("Start file load into buffer");
       const fileBuffer = fs.readFileSync(filePath);
 
-      console.log("File read into Buffer");
+      // console.log("File read into Buffer");
 
       const mimetype = mimeLookup(filePath) || 'application/octet-stream';
 
-      console.log("Block mime checked");
+      // console.log("Block mime checked");
 
       //Creating a fake Multer file object to use MinIO upload function
       const fakeMulterFile: Express.Multer.File = {
@@ -155,13 +155,13 @@ export class CorpusService {
         path: filePath,
       };
 
-      console.log("Starting block upload to MinIO");
+      // console.log("Starting block upload to MinIO");
       //Upload Corpus Block to MinIO to the 'corpus-blocks' bucket
       var blockRes = await this.minioService.uploadObject(
         fakeMulterFile,
         'corpus-blocks',
       );
-      console.log('Corpus Block uploaded to MinIO: ' + blockRes.filename);
+      // console.log('Corpus Block uploaded to MinIO: ' + blockRes.filename);
 
       const corpusBlock = await this.corpusBlockRepository.create({
         sequence: index+1,
@@ -175,7 +175,7 @@ export class CorpusService {
 
     //Step . Save everything
     await this.corpusRepository.save(corpus);
-    console.log('Success!');
+    // console.log('Success!');
 
     //Cleanup downloaded temp files
     //Remove Corpus file from the local disk

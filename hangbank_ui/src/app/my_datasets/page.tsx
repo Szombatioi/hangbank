@@ -40,7 +40,7 @@ export default function MyDatasetsPage() {
         }
 
         fetchMyDatasets();
-        console.log("Datasets: "+datasets);
+        // console.log("Datasets: "+datasets);
     }, []);
 
     return (
