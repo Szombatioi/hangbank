@@ -129,6 +129,7 @@ export class DatasetService {
         maxBlocks: dataset.corpus.corpus_blocks.length,
         speakerName:
           dataset.metadata?.speakers?.map((s) => s.user.name).join(',') ?? '',
+        type: dataset.mode
       };
     });
     return datasetDisplays;

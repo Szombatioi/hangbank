@@ -1,7 +1,7 @@
 "use client";
 import { Box, Button, Grid, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import DatasetCard from "../components/dataset_card";
+import DatasetCard, { ProjectType } from "../components/dataset_card";
 import { Add, ArrowDropDown } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -17,6 +17,7 @@ interface DatasetDisplayType{
     actualBlocks: number;
     maxBlocks: number;
     speakerName: string; 
+    type: ProjectType;
 }
 
 export default function MyDatasetsPage() {
@@ -57,7 +58,7 @@ export default function MyDatasetsPage() {
                 {
                     datasets.map((i, index) => (
                         <Grid size={3} key={index}>
-                            <DatasetCard id={i.id} title={i.title} corpusName={i.corpusName} language={i.language} actualBlocks={i.actualBlocks} totalBlocks={i.maxBlocks} speakerName={i.speakerName} />
+                            <DatasetCard id={i.id} type={i.type} title={i.title} corpusName={i.corpusName} language={i.language} actualBlocks={i.actualBlocks} totalBlocks={i.maxBlocks} speakerName={i.speakerName} />
                         </Grid>
                     ))
                 }
