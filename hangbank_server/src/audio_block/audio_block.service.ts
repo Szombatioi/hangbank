@@ -34,6 +34,7 @@ export class AudioBlockService {
     const result = await this.minioService.uploadObject(audioBlob, 'audio');
 
     const audioBlock = await this.audioBlockRepository.save(await this.audioBlockRepository.create({
+
       speaker: speaker,
       dataset: dataset,
       audio_minio_link: result.url,
@@ -44,17 +45,33 @@ export class AudioBlockService {
       const corpusBlock = await this.corpusBlockService.findOneById(corpusBlockId);
 
       //check if the corpusBlock has an audioblock already! (delete it from MinIO)
-      const cbAudio = await this.audioBlockRepository.find({ where: { corpusBlock: Not(IsNull()) } });
-      
-      cbAudio.forEach(a => {
-        this.minioService.deleteObject(a.audio_minio_link, "audio");
+      const cbAudio = await this.audioBlockRepository.find({
+        relations: {
+          dataset: true,
+          corpusBlock: true,
+        },
+        where: {
+          dataset: { id: dataset.id }, // Ensure the dataset is matched by its ID
+          corpusBlock: Not(IsNull()),
+        },
       });
-      await this.audioBlockRepository.delete(cbAudio);
+      
+      console.log(cbAudio);
+
+      if (cbAudio.length > 0) {
+        cbAudio.forEach(a => {
+          console.log(`$Audio will get deleted`);
+          console.log(a);
+          this.minioService.deleteObject(a.audio_minio_link, "audio");
+        });
+        await this.audioBlockRepository.delete(cbAudio.map(a => a.id));
+        
+      }
 
       audioBlock.corpusBlock = corpusBlock;
 
       await this.audioBlockRepository.save(audioBlock);
-      await this.corpusBlockService.update(corpusBlockId, {status: CorpusBlockStatus.done}); //TODO: handle warnings by checking audio quality!
+      // await this.corpusBlockService.update(corpusBlockId, {status: CorpusBlockStatus.done}); //TODO: handle warnings by checking audio quality!
     }
     
     } catch(e){

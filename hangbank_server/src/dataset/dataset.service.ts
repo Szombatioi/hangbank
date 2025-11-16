@@ -12,7 +12,7 @@ import { MicrophoneService } from 'src/microphone/microphone.service';
 import { Speaker } from 'src/speaker/entities/speaker.entity';
 import { Microphone } from 'src/microphone/entities/microphone.entity';
 import { sample } from 'rxjs';
-import { CorpusBlockStatus } from 'src/corpus_block/entities/corpus_block.entity';
+import { CorpusBlock, CorpusBlockStatus } from 'src/corpus_block/entities/corpus_block.entity';
 
 @Injectable()
 export class DatasetService {
@@ -139,7 +139,7 @@ export class DatasetService {
       where: { id },
       relations: {
         corpus: { corpus_blocks: true },
-        audioBlocks: {corpusBlock: true},
+        audioBlocks: {corpusBlock: true, dataset: true},
         metadata: { speakers: { user: true, microphone: true } },
       },
     });
@@ -165,13 +165,18 @@ export class DatasetService {
       corpus: { id: dataset.corpus.id, name: dataset.corpus.name },
       context: dataset.metadata.recording_context,
       corpusBlocks: dataset.corpus.corpus_blocks
-        .sort((a, b) => a.sequence - b.sequence)
-        .map((cb) => {
+      .sort((a, b) => a.sequence - b.sequence)
+      .map((cb) => {
+        const audioBlock = dataset.audioBlocks.find((ab) => {
+          return ab.corpusBlock.id === cb.id && ab.dataset.id === dataset.id;
+        });
+        // console.log("Dataset: ",dataset.id)
+          // console.log(cb.id)
           return {
             id: cb.id,
             sequence: cb.sequence,
             filename: cb.filename,
-            status: cb.status,
+            status: audioBlock != null ? CorpusBlockStatus.done : CorpusBlockStatus.todo,
           };
         }),
     };
