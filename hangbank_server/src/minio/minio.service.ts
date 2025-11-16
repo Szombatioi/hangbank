@@ -146,4 +146,22 @@ export class MinioService {
     });
   }
 
+  //Deletes a specific object
+  async deleteObject(objectName: string, bucket: string): Promise<void> {
+    //Validating if bucket exists
+    if (!this.bucketNames.includes(bucket)) {
+      throw new InternalServerErrorException('Invalid bucket name');
+    }
+
+    try {
+      //Deleting object
+      const sanitizedObjectName = path.basename(objectName);
+      await this.minioClient.removeObject(bucket, sanitizedObjectName);
+      this.logger.log(`Deleted object: ${objectName} from bucket: ${bucket}`);
+    } catch (err) {
+      this.logger.error('Error deleting file', err);
+      throw new InternalServerErrorException('Failed to delete file');
+    }
+  }
+
 }

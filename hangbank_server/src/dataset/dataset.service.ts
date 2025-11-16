@@ -112,10 +112,11 @@ export class DatasetService {
       where: { creator: { id: id } },
       relations: {
         corpus: { corpus_blocks: true },
-        audioBlocks: true,
+        audioBlocks: {corpusBlock: true},
         metadata: { speakers: true },
       },
     });
+
 
     const datasetDisplays: DatasetDisplay[] = datasets.map((dataset) => {
       // console.log(dataset.metadata?.speakers);
@@ -124,7 +125,7 @@ export class DatasetService {
         title: dataset.name,
         corpusName: dataset.corpus.name,
         language: dataset.corpus.language,
-        actualBlocks: dataset.audioBlocks.length,
+        actualBlocks: dataset.audioBlocks.filter(a => a.corpusBlock !== null).length,
         maxBlocks: dataset.corpus.corpus_blocks.length,
         speakerName:
           dataset.metadata?.speakers?.map((s) => s.user.name).join(',') ?? '',

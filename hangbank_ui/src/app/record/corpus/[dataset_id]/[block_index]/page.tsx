@@ -373,7 +373,7 @@ export default function RecordPage() {
           {dataset && (
             <Recorder
               selectedDeviceId={dataset.speakers[0].mic.deviceId}
-              save_freq_ms={1000}
+              save_freq_ms={250}
               useTranscript={true}
               onAudioUpdate={handleAudioUrlUpdate}
               onRecordingStop={handleAudioBlobUpdate}

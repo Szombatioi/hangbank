@@ -13,6 +13,7 @@ import {
 import { Box, IconButton, Paper, Tooltip, Typography } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { start } from "repl";
 import WaveSurfer from "wavesurfer.js";
 
 interface RecorderProps {
@@ -42,11 +43,13 @@ export default function Recorder({
 
   const [stream, setStream] = useState<MediaStream | null>(null); //represents the microphone
   const [recorder, setRecorder] = useState<MediaRecorder | null>(null); //represents the recording process
+  const recorderRef = useRef<MediaRecorder | null>(null);
   const [isRecording, setIsRecording] = useState<boolean>(false); //whether we are recording or not
   const [isPaused, setIsPaused] = useState<boolean>(false); //whether we are paused or not
   const isRecordingRef = useRef(isRecording);
   const isPausedRef = useRef(isPaused);
   const [audioUrl, setAudioUrl] = useState<string | null>(null); //the recorded audio URL to represent as waveform and to play
+  const audioUrlRef = useRef<string | null>(null);
   const audioChunksRef = useRef<Blob[]>([]); //to store the recorded audio chunks
 
   //WebSpeechAPI transcript
@@ -60,7 +63,12 @@ export default function Recorder({
     isRecordingRef.current = isRecording;
     isPausedRef.current = isPaused;
     wsiTranscriptRef.current = wsi_transcript;
-  }, [isRecording, isPaused, wsi_transcript]);
+    audioUrlRef.current = audioUrl; // 💡 SZINKRONIZÁLÁS HOZZÁADVA
+  }, [isRecording, isPaused, wsi_transcript, audioUrl]);
+
+  useEffect(() => {
+    recorderRef.current = recorder;
+  }, [recorder]);
 
   //Init SpeechRecognition
   useEffect(() => {
@@ -125,9 +133,21 @@ export default function Recorder({
   }, [transcript, wsi_transcript]);
 
   const startTranscribe = () => {
-    if (useTranscript) {
-      recognitionRef.current?.start();
-      // console.log("Transcribe started in startTranscribe function");
+    if (useTranscript && recognitionRef.current) {
+      // 💡 JAVÍTÁS: A start() hívást try...catch blokkba tesszük
+      try {
+        recognitionRef.current.start();
+        // console.log("Transcribe started in startTranscribe function");
+      } catch (error: any) {
+        // Ha már fut, az "InvalidStateError" hibát kapjuk, 
+        // amit egyszerűen figyelmen kívül hagyunk.
+        if (error.name === 'InvalidStateError') {
+          console.warn("SpeechRecognition already started, ignoring redundant call.");
+        } else {
+          // Más hiba esetén jelezzük
+          console.error("SpeechRecognition start error:", error);
+        }
+      }
     }
   };
   const stopTranscribe = () => {
@@ -154,7 +174,7 @@ export default function Recorder({
   }, [isPlayingAudio]);
 
   //TODO: make this number adjusted based on the audio length
-  const [minPxPerSec, setMinPxPerSec] = useState<number>(15); //1-1000?
+  const [minPxPerSec, setMinPxPerSec] = useState<number>(100); //1-1000?
   const handleSliderChange = (event: Event, newValue: number) => {
     setMinPxPerSec(newValue);
   };
@@ -203,8 +223,12 @@ export default function Recorder({
 
   //Update waveform if there is a new audio URL (every 1 sec)
   useEffect(() => {
+    console.log("New audio url")
     const ws = waveSurferRef.current;
-    if (ws && audioUrl) {
+    if (!ws) return;
+    console.log("Ws is not null")
+    if (audioUrl) {
+      console.log("AudioURL is not null")
       // Töröljük a régi URL-t, mielőtt újat töltünk be
       if (ws.isPlaying()) {
         ws.pause();
@@ -212,13 +236,18 @@ export default function Recorder({
       }
 
       // Betöltjük az újonnan generált Blob URL-t
+      console.log("Loading new audio URL");
       ws.load(audioUrl).catch((err) =>
         console.error("WaveSurfer hiba a betöltéskor:", err)
       );
+      console.log("Loaded");
 
       // Nagyon fontos: felszabadítjuk a régi Blob URL-t
       // (Bár a setAudioUrl az új URL-t kapja, a régi már nem kell, ha nem mentjük el)
       // Ezt a cleanup-ban célszerűbb megoldani.
+    } else if (!audioUrl) {
+      console.log("AudioURL is null")
+      ws.empty();
     }
   }, [audioUrl]);
 
@@ -233,9 +262,8 @@ export default function Recorder({
       const constraints = {
         audio: {
           deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined,
-          sampleRate: { ideal: sampleRate }
+          sampleRate: { ideal: sampleRate },
         },
-      
       };
 
       const newStream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -259,7 +287,12 @@ export default function Recorder({
           });
 
           const newUrl = URL.createObjectURL(fullBlob);
-          setAudioUrl(newUrl);
+          setAudioUrl((prevAudioUrl) => {
+            if (prevAudioUrl) {
+              URL.revokeObjectURL(prevAudioUrl);
+            }
+            return newUrl; // Visszaadjuk az új URL-t
+          });
 
           if (onAudioUpdate) {
             onAudioUpdate(newUrl);
@@ -281,6 +314,11 @@ export default function Recorder({
         } else {
           // Ez a helyzet akkor állhat elő, ha túl gyorsan nyomták meg a stop-ot
           // console.warn("Rögzítés leállítva, de nincs rögzített adat.");
+        }
+
+        if (audioUrlRef.current) {
+          URL.revokeObjectURL(audioUrlRef.current);
+          setAudioUrl(null);
         }
 
         // Állapotok nullázása
@@ -324,7 +362,8 @@ export default function Recorder({
 
     try {
       await getStreamAndSetupRecorder();
-      startTranscribe();
+      if(transcript.length === 0)
+        startTranscribe();
       // if (recorder && stream) {
       //   recorder!.start(save_freq_ms);
       //   setIsPaused(false);
@@ -332,6 +371,7 @@ export default function Recorder({
       // }
     } catch (err) {
       alert(t("no_mic_access"));
+      alert(err);
     }
   };
 
@@ -371,12 +411,12 @@ export default function Recorder({
       // Frissítjük a legfontosabb állapotot, hogy a gombok letiltódjanak
       setIsRecording(false);
       setIsPaused(false);
-
+      
+      setAudioUrl(null);
       // Felszabadítjuk a memóriát, ami a lejátszáshoz kellett
-      if (currentAudioUrl) {
-        URL.revokeObjectURL(currentAudioUrl);
-        setAudioUrl(null);
-      }
+      // if (currentAudioUrl) {
+      //   URL.revokeObjectURL(currentAudioUrl);
+      // }
       stopTranscribe();
       // console.log("Felvétel leállítási kérése elküldve.");
     }
@@ -385,20 +425,46 @@ export default function Recorder({
   //Handle Spacebar press to go to next block
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Csak akkor fusson, ha van "onSpacePress" prop, rögzítünk és nem vagyunk szüneteltetve
       if (
         onSpacePress &&
         event.code === "Space" &&
         isRecordingRef.current &&
         !isPausedRef.current
       ) {
-        event.preventDefault(); // prevents scrolling the page
-        console.log("Spacebar pressed - moving to next block");
+        event.preventDefault(); // Megakadályozza az oldal görgetését
+        
+        console.log("Spacebar: Blokkváltás. Jelenlegi Blob mentése és nullázása.");
+
+        // 1. Elküldjük az EDDIGI blob-ot a hívó oldalnak (ahogy eddig is)
         if (onSpacePress) {
-          onSpacePress(new Blob(audioChunksRef.current, {
-            type: "audio/webm",
-          }));
-          console.log("Sending audio block back to page")
-        };
+          onSpacePress(
+            new Blob(audioChunksRef.current, {
+              type: "audio/webm",
+            })
+          );
+          console.log("Előző blokk Blob-ja elküldve.");
+        }
+
+        // 2. 💡 NULLÁZZUK A BLOB-TÁROLÓT (a kérésed szerint)
+        // A MediaRecorder tovább fut, és a következő 'ondataavailable' 
+        // esemény már ebbe az üres tömbbe fogja helyezni az adatot.
+        audioChunksRef.current = [];
+
+        // 3. NULLÁZZUK a vizualizációt és a transzkripciót
+        // Felszabadítjuk a régi URL-t a memóriaszivárgás elkerülése érdekében
+        // A 'ref'-et használjuk, hogy biztosan a legutóbbi URL-t kapjuk meg
+        if (audioUrlRef.current) {
+          URL.revokeObjectURL(audioUrlRef.current);
+        }
+        
+        // Ez triggereli a WaveSurfer useEffect-et, ami meghívja a `ws.empty()`-t
+        setAudioUrl(null); 
+        
+        // Transzkripció nullázása az új blokkhoz
+        setTranscript("");
+        setWsiTranscript("");
+
       }
     };
 
@@ -407,7 +473,7 @@ export default function Recorder({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, []);
+  }, [onSpacePress]); // A függőségi tömböt frissítettem [onSpacePress]-re
 
   return (
     <div

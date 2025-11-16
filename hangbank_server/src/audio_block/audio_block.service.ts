@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { CreateAudioBlockDto } from './dto/create-audio_block.dto';
 import { UpdateAudioBlockDto } from './dto/update-audio_block.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { AudioBlock } from './entities/audio_block.entity';
 import { DatasetService } from 'src/dataset/dataset.service';
 import { SpeakerService } from 'src/speaker/speaker.service';
@@ -42,10 +42,17 @@ export class AudioBlockService {
     //Check if corpusblock is provided
     if(corpusBlockId){
       const corpusBlock = await this.corpusBlockService.findOneById(corpusBlockId);
-      //TODO: check if the corpusBlock has an audioblock already! (delete it from MinIO)
+
+      //check if the corpusBlock has an audioblock already! (delete it from MinIO)
+      const cbAudio = await this.audioBlockRepository.find({ where: { corpusBlock: Not(IsNull()) } });
+      
+      cbAudio.forEach(a => {
+        this.minioService.deleteObject(a.audio_minio_link, "audio");
+      });
+      await this.audioBlockRepository.delete(cbAudio);
+
       audioBlock.corpusBlock = corpusBlock;
 
-    
       await this.audioBlockRepository.save(audioBlock);
       await this.corpusBlockService.update(corpusBlockId, {status: CorpusBlockStatus.done}); //TODO: handle warnings by checking audio quality!
     }

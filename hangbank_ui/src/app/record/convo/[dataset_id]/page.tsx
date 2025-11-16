@@ -235,7 +235,7 @@ export default function ConvoBasedRecordingPage() {
                   {/*TODO: Add onRecordingStop and onSpacePress*/}
                   <Recorder
                     selectedDeviceId={microphoneDeviceId}
-                    save_freq_ms={1000}
+                    save_freq_ms={250}
                     useTranscript={true}
                     onAudioUpdate={() => {}}
                     onRecordingStop={() => {}}
