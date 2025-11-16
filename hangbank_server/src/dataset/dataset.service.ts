@@ -90,7 +90,9 @@ export class DatasetService {
           user: speaker,
           microphone: mic,
           metadata: metadata,
-          samplingFrequency: s.samplingFrequency
+          samplingFrequency: s.samplingFrequency,
+          speechDialect: s.speechDialect,
+          currentAge: this.calculateAge(speaker.birthdate)
         });
       }),
     );
@@ -155,7 +157,8 @@ export class DatasetService {
           id: s.id,
           user: { id: s.user.id, name: s.user.name },
           mic: { deviceId: s.microphone.deviceId, deviceLabel: s.microphone.label },
-          samplingFrequency: s.samplingFrequency
+          samplingFrequency: s.samplingFrequency,
+          speechDialect: s.speechDialect
         };
       }),
       corpus: { id: dataset.corpus.id, name: dataset.corpus.name },
@@ -179,5 +182,23 @@ export class DatasetService {
 
   remove(id: number) {
     return `This action removes a #${id} dataset`;
+  }
+
+
+  private calculateAge(birthdate: Date): number {
+    const today = new Date();
+    
+    let age = today.getFullYear() - birthdate.getFullYear();
+    
+    const hasHadBirthdayThisYear =
+      today.getMonth() > birthdate.getMonth() ||
+      (today.getMonth() === birthdate.getMonth() &&
+       today.getDate() >= birthdate.getDate());
+  
+    if (!hasHadBirthdayThisYear) {
+      age--;
+    }
+  
+    return age;
   }
 }

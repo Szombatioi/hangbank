@@ -33,6 +33,7 @@ interface CorpusResultType {
   mic: string;
   corpus: { id: string; name: string, language: string };
   context?: string;
+  speechDialect?: string | null;
   samplingFrequency: number;
 }
 
@@ -63,6 +64,7 @@ export default function NewProjectPage() {
       showMessage(t("internal_error"), Severity.error);
       return;
     }
+    console.log("SpeechDialect: ", val.speechDialect);
     setCorpusResult(val);
     //Retrieve corpus blocks
     const cblocks = await api.get<CorpusBlockType[]>(
@@ -169,7 +171,9 @@ export default function NewProjectPage() {
               </>
             ) : (
               <>
-                <ConvoBasedFragment />
+                <ConvoBasedFragment invokeNextStep={function (val: {}): void {
+                    throw new Error("Function not implemented.");
+                  } } />
               </>
             )}
           </motion.div>
@@ -191,6 +195,7 @@ export default function NewProjectPage() {
                     speakers={[corpusResult.speaker]}
                     corpus={corpusResult.corpus}
                     context={corpusResult.context}
+                    speechDialect={corpusResult.speechDialect}
                     corpusBlocks={corpusBlocks} 
                     samplingFrequency={corpusResult.samplingFrequency}
                   />

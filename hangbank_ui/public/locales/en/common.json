@@ -67,5 +67,7 @@
     "sample_frequency": "Sampling frequency",
     "dataset": "Dataset",
     "could_not_save_progress": "Could not save progress",
-    "errors_occured": "Errors have occured"
+    "errors_occured": "Errors have occured",
+    "speech_dialect": "Speaker's speech dialect",
+    "enter_speech_dialect": "(Optional) Describe whether the speaker has any speech disorders, dialects etc."
 }

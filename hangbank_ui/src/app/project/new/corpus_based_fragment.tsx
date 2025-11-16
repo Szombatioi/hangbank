@@ -27,6 +27,7 @@ export interface CorpusBasedFragmentProps {
     mic: string;
     corpus: { id: string; name: string; language: string };
     context?: string;
+    speechDialect?: string | null;
     samplingFrequency: number;
   }) => void;
 }
@@ -57,6 +58,8 @@ export default function CorpusBasedFragment({
   const [projectTitle, setProjectTitle] = useState<string>("");
   const [speaker, setSpeaker] = useState<SpeakerType | null>(null); //TODO
   const [context, setContext] = useState<string>("");
+  const [speechDialect, setSpeechDialect] = useState<string | null>(null);
+
   const handleButtonClick = () => {
     if (
       !projectTitle ||
@@ -78,6 +81,7 @@ export default function CorpusBasedFragment({
       mic: selectedMicName,
       corpus: selectedCorpus,
       context: context,
+      speechDialect: speechDialect,
       samplingFrequency: selectedFrequency,
     });
   };
@@ -239,6 +243,25 @@ export default function CorpusBasedFragment({
               </IconButton>
             </Grid>
 
+
+            <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
+              <Typography sx={{ width: 200, fontWeight: 500 }}>
+                {t("speech_dialect")}:
+              </Typography>
+            </Grid>
+            <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
+              <TextField
+                multiline
+                rows={5}
+                fullWidth
+                placeholder={t("enter_speech_dialect")}
+                value={speechDialect ?? ""}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  setSpeechDialect(e.target.value);
+                }}
+              />
+            </Grid>
+              
             {/* Context */}
             <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
               <Typography sx={{ width: 200, fontWeight: 500 }}>

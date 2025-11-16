@@ -22,6 +22,7 @@ interface CorpusProjectOverviewProps {
   speakers: SpeakerType[]; //TODO: perhaps make it a list for Mode 2
   corpus: CorpusHeaderType;
   context?: string;
+  speechDialect?: string | null;
   corpusBlocks: CorpusBlockType[];
   samplingFrequency: number;
   projectId?: string;
@@ -32,6 +33,7 @@ export default function CorpusProjectOverview({
   speakers,
   corpus,
   context,
+  speechDialect,
   corpusBlocks,
   projectId,
   samplingFrequency
@@ -79,6 +81,7 @@ export default function CorpusProjectOverview({
             mic_deviceId: s.mic.deviceId,
             mic_label: s.mic.deviceLabel,
             samplingFrequency: samplingFrequency,
+            speechDialect: speechDialect
           };
         }),
         corpus_id: corpus.id,
@@ -116,7 +119,7 @@ export default function CorpusProjectOverview({
               {t("microphone")}: {speakers[0].mic.deviceLabel} {/*TODO: use as list.  Perhaps replace user, mic with Speaker entity */}
             </Typography>
             <Typography>
-              {t("sample_frequency")}: {samplingFrequency} {/*TODO: use as list.  Perhaps replace user, mic with Speaker entity */}
+              {t("sample_frequency")}: {samplingFrequency} Hz {/*TODO: use as list.  Perhaps replace user, mic with Speaker entity */}
             </Typography>
             <Typography>
               {t("corpus")}: {corpus.name}
@@ -129,6 +132,9 @@ export default function CorpusProjectOverview({
                 {t("recording_context")}: {context}
               </Typography>
             )}
+            <Typography>
+              {t("speech_dialect")}: {speechDialect != null && speechDialect != "" ? speechDialect : "-"}
+            </Typography>
           </div>
           {/* Button to start recording from the first non-finished block */}
           <div

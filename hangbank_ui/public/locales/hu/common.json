@@ -67,5 +67,7 @@
     "sample_frequency": "Mintavételi frekvencia",
     "dataset": "Adathalmaz",
     "could_not_save_progress": "Nem sikerült menteni a folyamatot!",
-    "errors_occured": "Hibák történtek"
+    "errors_occured": "Hibák történtek",
+    "speech_dialect": "A beszélő nyelvi dialektusa",
+    "enter_speech_dialect": "(Opcionális) Írja le, ha a beszélőnek van bármiféle beszédhibája, dialektusa stb."
 }

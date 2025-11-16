@@ -16,6 +16,7 @@ export interface DatasetType {
   speakers: SpeakerType[];
   corpus: CorpusHeaderType;
   context?: string;
+  speechDialect?: string;
   corpusBlocks: CorpusBlockType[];
 }
 
@@ -53,6 +54,7 @@ export default function OverviewPage() {
                 speakers={dataset.speakers}
                 corpus={dataset.corpus}
                 context={dataset.context}
+                speechDialect={dataset.speechDialect}
                 corpusBlocks={dataset.corpusBlocks}
                 projectId={params.id}
                 samplingFrequency={dataset.speakers[0].samplingFrequency}

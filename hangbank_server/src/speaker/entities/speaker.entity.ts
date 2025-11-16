@@ -17,6 +17,12 @@ export class Speaker {
   @ManyToOne(() => User, { eager: true })
   user: User;
 
+  @Column({nullable: false})
+  currentAge: number;
+
+  @Column({nullable: true})
+  speechDialect: string; //Describes the current speech dialect of the speaker (e.g. having speech disorder)
+
   @ManyToOne(() => Microphone, { eager: true })
   microphone: Microphone;
 
