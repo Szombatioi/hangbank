@@ -49,7 +49,7 @@ export default function DatasetCard({
           alignItems: "center",
         }}
       >
-        <Grid container sx={{border: '1px solid red'}}>
+        <Grid container>
           <Grid size={11}>
             <Typography variant="h6">{title}</Typography>
           </Grid>
