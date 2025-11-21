@@ -1,8 +1,15 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { IconButton } from "@mui/material";
-import { Mic, Stop } from "@mui/icons-material";
+import { Box, IconButton, Paper, Typography } from "@mui/material";
+import {
+  Mic,
+  Pause,
+  PlayArrow,
+  SettingsVoice,
+  Stop,
+} from "@mui/icons-material";
 import WaveSurfer from "wavesurfer.js";
+import { t } from "i18next";
 
 interface RecorderProps {
   sampleRate: number; // desired sample rate for recording
@@ -14,8 +21,11 @@ interface RecorderProps {
 }
 
 export default function HighQualityRecorder({
+  useTranscript,
+  onTranscriptUpdate,
   deviceId,
   sampleRate,
+  language,
 }: RecorderProps) {
   const save_freq_ms = 500; //Updating wavesurf in every 0.5 sec
   const minPxPerSec = 100; //Width of waveform visual
@@ -29,6 +39,117 @@ export default function HighQualityRecorder({
   const mediaStreamRef = useRef<MediaStream | null>(null);
 
   const waveSurferRef = useRef<WaveSurfer | null>(null);
+  const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
+  const toggleAudioPlay = () => {
+    setIsPlayingAudio(!isPlayingAudio);
+  };
+
+  //WebSpeechAPI transcript
+  const [wsi_transcript, setWsiTranscript] = useState(""); //Wsi transcript = Web Speech API transcript, which can restart if we are silent for too long
+  const wsiTranscriptRef = useRef(wsi_transcript);
+  const [transcript, setTranscript] = useState("");
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const isRecordingRef = useRef(false);
+  useEffect(() => {
+    isRecordingRef.current = isRecording;
+  }, [isRecording]);
+
+  //Start/Stop playing audio with WaveSurfer when isPlayingAudio changes
+  useEffect(() => {
+    const ws = waveSurferRef.current;
+    if (!ws) return;
+
+    if (isPlayingAudio) {
+      ws.play();
+    } else {
+      ws.pause();
+    }
+  }, [isPlayingAudio]);
+
+  //Init SpeechRecognition
+  useEffect(() => {
+    if (!useTranscript) return;
+    // console.log("Transcribe is enabled");
+
+    if (typeof window === "undefined") return; // ensure client-side
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      console.error("SpeechRecognition not supported in this browser.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true; // keep listening
+    recognition.interimResults = true; // get partial results
+    recognition.lang = language;
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      //Only transcribe if recording and not paused
+      // console.log(isRecordingRef.current, isPausedRef.current);
+      if (!isRecordingRef.current) return;
+      let final = ""; // Lezárt, végleges szöveg az aktuális eseményben
+      let interim = ""; // Ideiglenes, még változó szöveg
+
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        const transcriptPart = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          final += transcriptPart;
+        } else {
+          interim += transcriptPart;
+        }
+      }
+
+      // 1. Frissítjük a FŐ (lezárt) transcript állapotot:
+      if (final.length > 0) {
+        // Hozzáadjuk a végleges szöveget a korábbi végleges szöveghez
+        setTranscript((prev) => (prev.trim() + " " + final.trim()).trim());
+      }
+
+      // 2. A Webspeech API által adott teljes (lezárt + ideiglenes) szöveget tároljuk a WSI state-ben
+      // Ezt jelenítheted meg a dobozban, mint a pillanatnyi szöveget.
+      // Mivel az event.results már tartalmazza az interim részt, csak ezt kell beállítani:
+      setWsiTranscript(interim);
+    };
+
+    recognition.onerror = (err: any) =>
+      console.error("Recognition error:", err);
+
+    recognitionRef.current = recognition;
+  }, []);
+
+  useEffect(() => {
+    // console.log("onTranscriptUpdate: ", transcript, wsiTranscriptRef.current)
+    if (onTranscriptUpdate) {
+      onTranscriptUpdate(transcript + wsi_transcript);
+    }
+  }, [transcript, wsi_transcript]);
+
+  const startTranscribe = () => {
+    if (useTranscript && recognitionRef.current) {
+      // 💡 JAVÍTÁS: A start() hívást try...catch blokkba tesszük
+      try {
+        recognitionRef.current.start();
+        // console.log("Transcribe started in startTranscribe function");
+      } catch (error: any) {
+        // Ha már fut, az "InvalidStateError" hibát kapjuk,
+        // amit egyszerűen figyelmen kívül hagyunk.
+        if (error.name === "InvalidStateError") {
+          console.warn(
+            "SpeechRecognition already started, ignoring redundant call."
+          );
+        } else {
+          // Más hiba esetén jelezzük
+          console.error("SpeechRecognition start error:", error);
+        }
+      }
+    }
+  };
+  const stopTranscribe = () => {
+    if (useTranscript) recognitionRef.current?.stop();
+  };
 
   useEffect(() => {
     waveSurferRef.current = WaveSurfer.create({
@@ -51,19 +172,20 @@ export default function HighQualityRecorder({
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
-  
+
     if (isRecording) {
       interval = setInterval(() => {
         visualizePCM(pcmChunksRef.current);
       }, save_freq_ms);
     }
-  
+
     return () => clearInterval(interval);
   }, [isRecording]);
 
   function visualizePCM(chunks: Float32Array[]) {
-    if (!audioContextRef || !audioContextRef.current || !waveSurferRef.current) return;
-  
+    if (!audioContextRef || !audioContextRef.current || !waveSurferRef.current)
+      return;
+
     const totalLength = chunks.reduce((sum, c) => sum + c.length, 0);
     const merged = new Float32Array(totalLength);
     let offset = 0;
@@ -71,10 +193,9 @@ export default function HighQualityRecorder({
       merged.set(c, offset);
       offset += c.length;
     }
-  
+
     waveSurferRef.current.loadBlob(encodeWavFromFloat32(merged, sampleRate));
   }
-  
 
   useEffect(() => {
     return () => {
@@ -120,6 +241,10 @@ export default function HighQualityRecorder({
     source.connect(workletNode);
     workletNode.connect(audioContext.destination); // optional
     setIsRecording(true);
+
+    if (useTranscript) {
+      startTranscribe();
+    }
   };
 
   const stopRecording = async () => {
@@ -135,6 +260,7 @@ export default function HighQualityRecorder({
     await audioContextRef.current.close();
 
     setIsRecording(false);
+    if (useTranscript) recognitionRef.current?.stop();
 
     // Merge PCM chunks
     const totalLength = pcmChunksRef.current.reduce(
@@ -158,14 +284,156 @@ export default function HighQualityRecorder({
       <IconButton onClick={isRecording ? stopRecording : startRecording}>
         {isRecording ? <Stop /> : <Mic />}
       </IconButton>
-      <div id="waveform" />
 
-      {audioUrl && (
+      <Paper
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          padding: 4,
+          boxShadow: "none",
+          border: "2px solid #ccc",
+        }}
+        elevation={4}
+      >
+        {/* Waveform */}
+        <div id="waveform" />
+        {/* Recording buttons */}
+        <div style={{ display: "flex", justifyContent: "center", gap: 4 }}>
+          <IconButton
+            onClick={() => {
+              if (!isRecording) {
+                startRecording();
+              } else {
+                stopRecording();
+                //   if (isPaused) {
+                //     resumeRecording();
+                //   } else {
+                //     pauseRecording();
+                //   }
+              }
+            }}
+            size="medium"
+            sx={{ boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.2)" }}
+          >
+            {/* {isRecording ? (
+              // isPaused ? (
+              //   <>
+              //     <SettingsVoice />
+              //   </>
+              // ) : (
+              //   <>
+              //     <Pause />
+              //   </>
+              // )
+              <Pause />
+            ) : (
+              <>
+                
+              </>
+            )} */}
+            {isRecording ? (
+                <><Stop /></>
+            ): (
+                <><Mic /></>
+            )}
+          </IconButton>
+
+          {/* {isRecording && (
+            <>
+              <IconButton
+                onClick={() => {
+                  stopRecording();
+                }}
+                size="medium"
+                sx={{ boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.2)" }}
+              >
+                <Stop />
+              </IconButton>
+            </>
+          )} */}
+
+          {audioUrl && !isRecording && (
+            <>
+              <IconButton
+                onClick={() => {
+                  toggleAudioPlay();
+                }}
+                size="medium"
+                sx={{ boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.2)" }}
+              >
+                {isPlayingAudio ? <Pause /> : <PlayArrow />}
+              </IconButton>
+            </>
+          )}
+
+          {/* {audioUrl && !isRecording && (
+            <>
+              <IconButton
+                onClick={() => {
+                  toggleAudioPlay();
+                }}
+                size="medium"
+                sx={{ boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.2)" }}
+              >
+                {isPlayingAudio ? <Pause /> : <PlayArrow />}
+              </IconButton>
+            </>
+          )} */}
+        </div>
+      </Paper>
+
+      {/* {audioUrl && (
         <audio
           src={audioUrl}
           controls
           style={{ display: "block", marginTop: 10 }}
         />
+      )} */}
+
+      {useTranscript && (
+        <>
+          <div style={{ marginTop: 8, marginBottom: 8 }}>
+            <Box
+              sx={{
+                justifySelf: "center",
+                // border: "1px solid red",
+                width: "100%",
+                minHeight: 256,
+                maxHeight: 512,
+                display: "flex",
+                justifyContent: "center",
+                textWrap: "wrap",
+              }}
+            >
+              <Paper
+                sx={{
+                  display: "flex",
+                  width: "100%",
+                  flexDirection: "column",
+                  padding: 2,
+                  boxShadow: "none",
+                  border: "2px solid #ccc",
+                  justifyContent: "space-between",
+                  alignItems: "space-between",
+                  textWrap: "wrap",
+                }}
+              >
+                <Typography>{transcript + wsi_transcript}</Typography>
+
+                <Typography
+                  align="center"
+                  sx={{
+                    marginBlock: -2,
+                    color: "#ccc",
+                  }}
+                >
+                  {t("transcription")}
+                </Typography>
+              </Paper>
+            </Box>
+          </div>
+        </>
       )}
     </div>
   );

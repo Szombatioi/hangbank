@@ -7,7 +7,7 @@ export default function TestTTSPage() {
     <>
         <HighQualityRecorder 
           useTranscript={true}
-          language=""
+          language="en-US"
           onSpacePress={() => {}}
           onTranscriptUpdate={() => {}}
           deviceId="06b13ea600dcbe5762bc2d1827cd2b7400d913e1db4616ce161f7d577c40e0be" 
