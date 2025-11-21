@@ -17,12 +17,15 @@ interface RecorderProps {
   useTranscript: boolean;
   onSpacePress?: (blob: Blob) => void;
   onTranscriptUpdate?: (text: string) => void;
+  onRecorderStop?: (blob: Blob) => void;
   language: string;
 }
 
 export default function HighQualityRecorder({
   useTranscript,
+  onSpacePress,
   onTranscriptUpdate,
+  onRecorderStop,
   deviceId,
   sampleRate,
   language,
@@ -147,9 +150,6 @@ export default function HighQualityRecorder({
       }
     }
   };
-  const stopTranscribe = () => {
-    if (useTranscript) recognitionRef.current?.stop();
-  };
 
   useEffect(() => {
     waveSurferRef.current = WaveSurfer.create({
@@ -261,6 +261,8 @@ export default function HighQualityRecorder({
 
     setIsRecording(false);
     if (useTranscript) recognitionRef.current?.stop();
+    setTranscript("");
+    setWsiTranscript("");
 
     // Merge PCM chunks
     const totalLength = pcmChunksRef.current.reduce(
@@ -277,13 +279,59 @@ export default function HighQualityRecorder({
     // Convert to WAV
     const wavBlob = encodeWavFromFloat32(merged, sampleRate);
     setAudioUrl(URL.createObjectURL(wavBlob));
+
+    let sentBlob = false;
+    if (onSpacePress) {
+      console.log("OnSpacePress pressed in recorder");
+      onSpacePress(wavBlob); //send it back
+      sentBlob = true;
+    }
+    if (onRecorderStop && !sentBlob) {
+      onRecorderStop(wavBlob); //send final back, but ignore if space already sent it
+    }
   };
 
+  useEffect(() => {
+    const handleKeyDown = async (event: KeyboardEvent) => {
+      if (onSpacePress && event.code === "Space" && isRecordingRef.current) {
+        event.preventDefault(); // Megakadályozza az oldal görgetését
+
+        console.log(
+          "Spacebar: Blokkváltás. Jelenlegi Blob mentése és nullázása."
+        );
+
+        //Send currently recorded blob to caller side
+        if (onSpacePress != null) {
+          await stopRecording();
+          await startRecording();
+          console.log("Előző blokk Blob-ja elküldve.");
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onSpacePress]);
+
   return (
-    <div style={{ fontFamily: "sans-serif" }}>
-      <IconButton onClick={isRecording ? stopRecording : startRecording}>
+    <div
+      style={{
+        justifySelf: "center",
+        // border: "1px solid red",
+        width: "75%",
+        overflowX: "auto",
+        overflowY: "hidden",
+        whiteSpace: "nowrap",
+        marginTop: 8,
+        marginBottom: 8,
+      }}
+    >
+      {/* <IconButton onClick={isRecording ? stopRecording : startRecording}>
         {isRecording ? <Stop /> : <Mic />}
-      </IconButton>
+      </IconButton> */}
 
       <Paper
         style={{
@@ -333,9 +381,13 @@ export default function HighQualityRecorder({
               </>
             )} */}
             {isRecording ? (
-                <><Stop /></>
-            ): (
-                <><Mic /></>
+              <>
+                <Stop />
+              </>
+            ) : (
+              <>
+                <Mic />
+              </>
             )}
           </IconButton>
 
