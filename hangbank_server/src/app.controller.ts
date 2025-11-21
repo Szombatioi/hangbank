@@ -8,7 +8,6 @@ export class AppController {
 
   @Post('login')
   async login(@Body() body: {email: string, password: string}){
-    console.log("Login try...")
     const user = await this.appService.validateUser(body.email, body.password);
     if (!user) throw new UnauthorizedException('Invalid credentials');
     return user; // return user data (no password)

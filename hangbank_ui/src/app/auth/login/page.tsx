@@ -1,5 +1,6 @@
 "use client";
 
+import { Severity, useSnackbar } from "@/app/contexts/SnackbarProvider";
 import { Box, Button, Divider, Grid, MenuItem, Paper, Select, TextField, Typography } from "@mui/material";
 import { t } from "i18next";
 import { signIn } from "next-auth/react";
@@ -9,6 +10,7 @@ import { useState } from "react";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const {showMessage} = useSnackbar();
 
   const router = useRouter();
 
@@ -21,10 +23,13 @@ export default function LoginPage() {
     });
     if (res?.error) {
       // show error
+      showMessage(t("invalid_credentials"), Severity.error);
       console.error(res.error);
     } else {
       // manually redirect
-      window.location.href = "/";
+      showMessage(t("successful_login"), Severity.success);
+      // window.location.href = "/";
+      router.push("/");
     }
   };
 

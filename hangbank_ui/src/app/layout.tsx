@@ -4,13 +4,15 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { Button, CircularProgress, CssBaseline } from "@mui/material";
-import { LanguageProvider } from "./contexts/LanguageContext";
-import { SnackbarProvider } from "./contexts/SnackbarProvider";
+import { LanguageProvider, useLanguage } from "./contexts/LanguageContext";
+import { Severity, SnackbarProvider, useSnackbar } from "./contexts/SnackbarProvider";
 import { SessionProvider, useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect } from "react";
 import { signOut } from "next-auth/react";
 import Navbar from "./components/navbar";
+import api from "./axios";
+import { useTranslation } from "react-i18next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -73,6 +75,9 @@ function AuthGuard({ children }: { children: ReactNode }) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
+  const {setLanguage} = useLanguage();
+  const {showMessage} = useSnackbar();
+  const {t} = useTranslation("common");
 
   useEffect(() => {
     const isAuthPage = pathname.startsWith("/auth");
@@ -80,6 +85,22 @@ function AuthGuard({ children }: { children: ReactNode }) {
       router.push("/auth/login");
     }
   }, [status, router, pathname]);
+
+  useEffect(() => {
+    async function fetchUserSettings(){
+      try{
+        const settings = await api.get<{language: {
+          id: string,
+          code: string,
+          name: string
+        }}>(`/user-settings/${session?.user.id}`);
+        setLanguage(settings.data.language.code.split("-")[0]);
+      }catch(err){
+        showMessage(t("fetch_settings_fail"), Severity.error);
+      }
+
+    }
+  }, []);
 
   if (status === "loading")
     return (

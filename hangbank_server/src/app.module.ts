@@ -26,6 +26,8 @@ import { AiModel } from './ai_model/entities/ai_model.entity';
 import { AiChatHistory } from './ai_chat_history/entities/ai_chat_history.entity';
 import { LanguageModule } from './language/language.module';
 import { Language } from './language/entities/language.entity';
+import { UserSettingsModule } from './user-settings/user-settings.module';
+import { UserSettings } from './user-settings/entities/user-setting.entity';
 
 @Module({
   imports: [
@@ -39,7 +41,7 @@ import { Language } from './language/entities/language.entity';
       username: process.env.DB_USER,
       password: process.env.DB_PASS,
       database: process.env.DB_NAME,
-      entities: [User, Metadata, Dataset, AudioBlock, CorpusBlock, Corpus, Microphone, Speaker, AiModel, AiChatHistory, Language],
+      entities: [User, Metadata, Dataset, AudioBlock, CorpusBlock, Corpus, Microphone, Speaker, AiModel, AiChatHistory, Language, UserSettings],
       synchronize: true, //TODO: replace this with migrations in production
     }),
     MinioModule,
@@ -53,7 +55,8 @@ import { Language } from './language/entities/language.entity';
     MicrophoneModule,
     AiModelModule,
     AiChatHistoryModule,
-    LanguageModule
+    LanguageModule,
+    UserSettingsModule
   ],
   controllers: [AppController],
   providers: [AppService],

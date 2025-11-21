@@ -6,6 +6,7 @@ import * as mammoth from 'mammoth';
 // import { PdfReader } from 'pdfreader';
 
 // import pdfParse from 'pdf-parse';
+const { PDFParse } = require('pdf-parse');
 
 import * as sbd from 'sbd';
 
@@ -47,11 +48,11 @@ export class FileCorpusService {
   return result.value;
   }
 
-//   async extractTextFromPdf(filePath: string): Promise<string[]> {
-//     const dataBuffer = await fs.promises.readFile(filePath);
-//     const pdfData = await pdf(dataBuffer);
-//     return pdfData.text.split('\n').filter((t) => t.trim().length > 0);
-//   }
+  async extractTextFromPdf(filePath: string): Promise<string[]> {
+    const parser = new PDFParse({ url: filePath });
+    const result = await parser.getText();
+    return result.text.split('\n').filter((t) => t.trim().length > 0).slice(0, -1);
+  }
 
   cleanText(text: string): string {
     // 1. Fix hyphenation at line breaks
@@ -103,8 +104,8 @@ export class FileCorpusService {
 
     if (ext === '.txt') text = await this.extractTextFromTxt(filePath);
     else if (ext === '.docx') text = await this.extractTextFromDocx(filePath);
-    // else if (ext === '.pdf')
-    //   text = (await this.extractTextFromPdf(filePath)).join(' ');f
+    else if (ext === '.pdf')
+      text = (await this.extractTextFromPdf(filePath)).join(' ');
     else
       throw new Error(
         'Unsupported file format. Please use .txt, .docx, or .pdf',

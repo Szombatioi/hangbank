@@ -69,5 +69,14 @@
     "could_not_save_progress": "Nem sikerült menteni a folyamatot!",
     "errors_occured": "Hibák történtek",
     "speech_dialect": "A beszélő nyelvi dialektusa",
-    "enter_speech_dialect": "(Opcionális) Írja le, ha a beszélőnek van bármiféle beszédhibája, dialektusa stb."
+    "enter_speech_dialect": "(Opcionális) Írja le, ha a beszélőnek van bármiféle beszédhibája, dialektusa stb.",
+    "invalid_credentials": "Hibás adatok!",
+    "successful_login": "Sikeres bejelentkezés!",
+    "signout": "Kijelentkezés",
+    "home": "Főoldal",
+    "settings": "Beállítások",
+    "settings_update_fail": "Nem sikerült menteni a felhasználó beállításait!",
+    "fetch_settings_fail": "Nem sikerült lekérdezni a felhasználó beállításait!",
+    "fetch_languages_fail": "Nem sikerült lekérdezni az elérhető nyelveket!",
+    "no_corpora_yet": "Még nincs feltöltve korpusz"
 }

@@ -23,7 +23,7 @@ export class AudioBlockService {
 
   async create(createAudioBlockDto: CreateAudioBlockDto, audioBlob: Express.Multer.File) {
     try{
-      const {datasetId, speakerId, corpusBlockId} = createAudioBlockDto;
+      const {datasetId, speakerId, corpusBlockId, transcript} = createAudioBlockDto;
     
     //Get dataset - throws error if not found
     const dataset = await this.datasetService.findOne(datasetId);
@@ -34,7 +34,6 @@ export class AudioBlockService {
     const result = await this.minioService.uploadObject(audioBlob, 'audio');
 
     const audioBlock = await this.audioBlockRepository.save(await this.audioBlockRepository.create({
-
       speaker: speaker,
       dataset: dataset,
       audio_minio_link: result.url,
@@ -43,6 +42,11 @@ export class AudioBlockService {
     //Check if corpusblock is provided
     if(corpusBlockId){
       const corpusBlock = await this.corpusBlockService.findOneById(corpusBlockId);
+
+      //We expect a transcript for a corpus block!
+      if(!transcript){
+        //TODO: add to warnings list of this audioBlock
+      }
 
       //check if the corpusBlock has an audioblock already! (delete it from MinIO)
       const cbAudio = await this.audioBlockRepository.find({
@@ -56,7 +60,7 @@ export class AudioBlockService {
         },
       });
       
-      console.log(cbAudio);
+      // console.log(cbAudio);
 
       if (cbAudio.length > 0) {
         cbAudio.forEach(a => {
@@ -71,12 +75,24 @@ export class AudioBlockService {
       audioBlock.corpusBlock = corpusBlock;
 
       await this.audioBlockRepository.save(audioBlock);
+
+      //TODO: run checks for the audioBlob
+      this.runChecksForBlob(audioBlob);
+
       // await this.corpusBlockService.update(corpusBlockId, {status: CorpusBlockStatus.done}); //TODO: handle warnings by checking audio quality!
     }
     
     } catch(e){
       throw e;
     }
+  }
+
+  //This method checks for the quelity of the recorded blob
+  //1. Noise level (Jel/Zaj viszony)
+  //2. Loudness/Quiteness
+  //etc.
+  private async runChecksForBlob(audioBlob: Express.Multer.File){
+
   }
 
   findAll() {

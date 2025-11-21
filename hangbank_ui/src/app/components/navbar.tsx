@@ -1,3 +1,4 @@
+import { AccountCircle } from "@mui/icons-material";
 import {
   AppBar,
   Avatar,
@@ -17,6 +18,8 @@ import { signOut, SignOutParams } from "next-auth/react";
 import { pages } from "next/dist/build/templates/app-page";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface PageType {
   name: string;
@@ -32,11 +35,12 @@ interface NavbarProps {
 export default function Navbar({ signOutCallback }: NavbarProps) {
   {
     const router = useRouter();
-    const pages: PageType[] = [
-      { name: "Home", onClick: () => router.push("/") },
-      { name: "Sign Out", onClick: () => signOutCallback() },
-    ];
+    const [pages, setPages] = useState<PageType[]>([]);
+    const {t} = useTranslation("common");
 
+    useEffect(() => {
+      setPages([{ name: t("home"), onClick: () => router.push("/") }]);
+    }, [t]);
     return (
       <AppBar
         sx={{
@@ -138,6 +142,15 @@ export default function Navbar({ signOutCallback }: NavbarProps) {
                 </Button>
               ))}
             </Box>
+            <IconButton onClick={()=>{router.push("/account")}}>
+              <AccountCircle />
+            </IconButton>
+            <Button
+                  onClick={() => signOutCallback()} 
+                  sx={{ my: 2, color: "inherit", display: "block" }}
+                >
+                  {t("signout")}
+                </Button>
             <Box sx={{ flexGrow: 0 }}></Box>
           </Toolbar>
         </Container>

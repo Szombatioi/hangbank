@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateLanguageDto } from './dto/create-language.dto';
 import { UpdateLanguageDto } from './dto/update-language.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -19,8 +19,16 @@ export class LanguageService {
     return await this.languageRepository.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} language`;
+  async findOne(id: string) {
+    const langauge = await this.languageRepository.findOne({where: {id}});
+    if(!langauge) throw new NotFoundException("Language not found with ID: " + id);
+    return langauge;
+  }
+
+  async findOneByCode(code: string) {
+    const langauge = await this.languageRepository.findOne({where: {code}});
+    if(!langauge) throw new NotFoundException("Language not found with code: " + code);
+    return langauge;
   }
 
   update(id: number, updateLanguageDto: UpdateLanguageDto) {
@@ -33,14 +41,16 @@ export class LanguageService {
 
   async seedLanguages() {
     const existingLanguages = await this.languageRepository.find();
-    const languagesToSeed: Language[] = [
+    const languagesToSeed: {code: string, name: string, isTranslated: boolean}[] = [
       {
         code: 'en-US',
         name: 'English (US)',
+        isTranslated: true,
       },
       {
         code: 'hu-HU',
         name: 'Hungarian',
+        isTranslated: true,
       }
     ];
 

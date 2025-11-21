@@ -69,5 +69,14 @@
     "could_not_save_progress": "Could not save progress",
     "errors_occured": "Errors have occured",
     "speech_dialect": "Speaker's speech dialect",
-    "enter_speech_dialect": "(Optional) Describe whether the speaker has any speech disorders, dialects etc."
+    "enter_speech_dialect": "(Optional) Describe whether the speaker has any speech disorders, dialects etc.",
+    "invalid_credentials": "Invalid credentials!",
+    "successful_login": "Successful login!",
+    "signout": "Sign Out",
+    "home": "Home",
+    "settings": "Settings",
+    "settings_update_fail": "Could not update settings for user!",
+    "fetch_settings_fail": "Could not fetch settings for user!",
+    "fetch_languages_fail": "Could not fetch available languages!",
+    "no_corpora_yet": "There are no corpora yet"
 }
