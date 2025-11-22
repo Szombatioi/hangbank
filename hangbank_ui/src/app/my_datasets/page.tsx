@@ -5,9 +5,9 @@ import DatasetCard, { ProjectType } from "../components/dataset_card";
 import { Add, ArrowDropDown } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
-import api from "../axios";
+import api, { getUserByToken } from "../axios";
 import { Severity, useSnackbar } from "../contexts/SnackbarProvider";
+import { useAuth } from "../contexts/AuthContext";
 
 interface DatasetDisplayType{
     id: string;
@@ -22,27 +22,28 @@ interface DatasetDisplayType{
 
 export default function MyDatasetsPage() {
     const { t } = useTranslation("common");
-    const {data: session} = useSession();
     const {showMessage} = useSnackbar();
+    const {user, loading} = useAuth();
 
     const [datasets, setDatasets] = useState<DatasetDisplayType[]>([]); //TODO: API call
     const router = useRouter();
 
     useEffect(() => {
+        if(loading || !user) return;
         async function fetchMyDatasets(){
             try{
-                if(!session) throw new Error("User is not logged in!");
-                const res = await api.get<DatasetDisplayType[]>(`/dataset/user/${session.user.id}`);
-                console.log(res.data);
+                const res = await api.get<DatasetDisplayType[]>(`/dataset/user/${user!.id}`);
+                console.log("Datasets: ", res.data);
                 setDatasets(res.data);
             } catch(err){
+                console.error(err);
                 showMessage(t("could_not_load_datasets"), Severity.error);
             }
         }
 
         fetchMyDatasets();
         // console.log("Datasets: "+datasets);
-    }, []);
+    }, [loading, user]);
 
     return (
         <Box p={4}>

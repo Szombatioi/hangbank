@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import api from "../axios";
-import { useSession } from "next-auth/react";
+import api, { getAuthToken, getUserByToken } from "../axios";
 import { Language, useLanguage } from "../contexts/LanguageContext";
 import {
   FormControl,
@@ -17,6 +16,7 @@ import {
 } from "@mui/material";
 import { t } from "i18next";
 import { Severity, useSnackbar } from "../contexts/SnackbarProvider";
+import { useAuth } from "../contexts/AuthContext";
 
 export interface LanguageType {
   id: string;
@@ -33,43 +33,50 @@ export default function AccountPage() {
   const [userSettings, setUserSettings] = useState<UserSettingsType | null>(
     null
   );
-  const { data: session } = useSession();
   const { language, setLanguage } = useLanguage();
-  const [selectedLanguage, setSelectedLanguage] = useState<LanguageType | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState<LanguageType | null>(
+    null
+  );
   const [selectedLanguageId, setSelectedLanguageId] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const { showMessage } = useSnackbar();
-  const [availableLanguages, setAvailableLanguages] = useState<LanguageType[]>([]);
+  const [availableLanguages, setAvailableLanguages] = useState<LanguageType[]>(
+    []
+  );
+  const { user, loading } = useAuth();
 
   useEffect(() => {
+    if (loading || !user) return;
+    console.log("Loading: ", loading)
+    console.log("User: ", user)
     async function fetchUserSettings() {
       try {
-        const res = await api.get<UserSettingsType>(
-          `/user-settings/${session?.user.id}`
-        ); //TODO: rewrite with token access (FE does nothing...?)
+        const token = getAuthToken();
+        const res = await api.get<UserSettingsType>(`/user-settings`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setUserSettings(res.data);
         setIsLoading(false);
       } catch (err) {
+        console.error(err);
         showMessage(t("fetch_settings_fail"), Severity.error);
       }
     }
 
     async function fetchAvailableLanguages() {
-        try {
-            const res = await api.get<LanguageType[]>(
-              `/language`
-            );
-            setAvailableLanguages(res.data.filter(l => l.isTranslated));
-            console.log(res.data.filter(l => l.isTranslated));
-            setIsLoading(false);
-          } catch (err) {
-            showMessage(t("fetch_languages_fail"), Severity.error);
-          }
+      try {
+        const res = await api.get<LanguageType[]>(`/language`);
+        setAvailableLanguages(res.data.filter((l) => l.isTranslated));
+        console.log(res.data.filter((l) => l.isTranslated));
+        setIsLoading(false);
+      } catch (err) {
+        showMessage(t("fetch_languages_fail"), Severity.error);
+      }
     }
 
     fetchAvailableLanguages();
     fetchUserSettings();
-  }, []);
+  }, [user, loading]);
 
   useEffect(() => {
     if (userSettings?.language) {
@@ -83,13 +90,18 @@ export default function AccountPage() {
     setLanguage(language.code.split("-")[0]);
 
     //update user settings on backend
-    try{
-        const res = await api.put(`/user-settings/${session?.user.id}`, {languageId: language.id});
-        //TODO: add LanguageType when i retrieve the languages
-        //then when i select a new language, set with setLanguage(language.language)
-        //Then save with api(...language.id...)
-    } catch(err){
-        showMessage(t("settings_update_fail"), Severity.error);
+    try {
+      const token = await getAuthToken();
+      const res = await api.put(`/user-settings`, {
+        languageId: language.id,
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      //TODO: add LanguageType when i retrieve the languages
+      //then when i select a new language, set with setLanguage(language.language)
+      //Then save with api(...language.id...)
+    } catch (err) {
+      showMessage(t("settings_update_fail"), Severity.error);
     }
 
     setIsLoading(false);
@@ -129,22 +141,24 @@ export default function AccountPage() {
               >
                 <Typography variant="h6">{t("language")}:</Typography>
                 <FormControl sx={{ minWidth: 120 }} size="small">
-                <Select
-  value={selectedLanguageId}
-  onChange={(e) => {
-    const langId = e.target.value;
-    setSelectedLanguageId(langId);
+                  <Select
+                    value={selectedLanguageId}
+                    onChange={(e) => {
+                      const langId = e.target.value;
+                      setSelectedLanguageId(langId);
 
-    const lang = availableLanguages.find((l) => l.id === langId);
-    if (lang) updateLanguageSettings(lang);
-  }}
->
-  {availableLanguages.map((l) => (
-    <MenuItem key={l.id} value={l.id}>
-      {l.name}
-    </MenuItem>
-  ))}
-</Select>
+                      const lang = availableLanguages.find(
+                        (l) => l.id === langId
+                      );
+                      if (lang) updateLanguageSettings(lang);
+                    }}
+                  >
+                    {availableLanguages.map((l) => (
+                      <MenuItem key={l.id} value={l.id}>
+                        {l.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
                 </FormControl>
               </div>
             </Paper>

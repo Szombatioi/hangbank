@@ -1,3 +1,4 @@
+import { JwtModule } from "@nestjs/jwt";
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -28,6 +29,7 @@ import { LanguageModule } from './language/language.module';
 import { Language } from './language/entities/language.entity';
 import { UserSettingsModule } from './user-settings/user-settings.module';
 import { UserSettings } from './user-settings/entities/user-setting.entity';
+import { JwtStrategy } from "./jwt.strategy";
 
 @Module({
   imports: [
@@ -44,6 +46,10 @@ import { UserSettings } from './user-settings/entities/user-setting.entity';
       entities: [User, Metadata, Dataset, AudioBlock, CorpusBlock, Corpus, Microphone, Speaker, AiModel, AiChatHistory, Language, UserSettings],
       synchronize: true, //TODO: replace this with migrations in production
     }),
+    JwtModule.register({
+      secret: process.env.JWT_SECRET || "c76ed98e2e5f8b6e1fcba0d68222bd4faa9a9a15bdb7772c5ba3dbae1d264d62",
+      signOptions: { expiresIn: "1h" },
+    }),
     MinioModule,
     UserModule,
     MetadataModule,
@@ -59,6 +65,7 @@ import { UserSettings } from './user-settings/entities/user-setting.entity';
     UserSettingsModule
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, JwtStrategy],
+  exports: [JwtModule],
 })
 export class AppModule {}

@@ -33,8 +33,15 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     async function fetchAvailableLanguages() {
       try {
         const res = await api.get<LanguageType[]>(`/language`);
+        console.log(res.data);
         setAvailableLanguages(res.data.filter((l) => l.isTranslated));
-        console.log(res.data.filter((l) => l.isTranslated));
+
+
+        const stored = localStorage.getItem("language") as Language;
+        if (res.data.some(l => l.code.split("-")[0] === stored)) {
+          setLanguage(stored);
+          i18n.changeLanguage(stored);
+        }
       } catch (err) {
         showMessage(t("fetch_languages_fail"), Severity.error);
       }
@@ -43,13 +50,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     fetchAvailableLanguages();
   }, []);
 
-  useEffect(() => {
-    const stored = localStorage.getItem("language") as Language;
-    if (availableLanguages.some(l => l.code.split("-")[0] === stored)) {
-      setLanguage(stored);
-      i18n.changeLanguage(stored);
-    }
-  }, []);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);

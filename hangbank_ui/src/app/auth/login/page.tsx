@@ -1,5 +1,6 @@
 "use client";
 
+import api, { setAuthToken } from "@/app/axios";
 import { Severity, useSnackbar } from "@/app/contexts/SnackbarProvider";
 import { Box, Button, Divider, Grid, MenuItem, Paper, Select, TextField, Typography } from "@mui/material";
 import { t } from "i18next";
@@ -15,21 +16,17 @@ export default function LoginPage() {
   const router = useRouter();
 
   const handleLogin = async () => {
-    const res = await signIn("credentials", {
-      redirect: false,
-      email,
-      password,
-      callbackUrl: "/", // where to go after login
-    });
-    if (res?.error) {
-      // show error
-      showMessage(t("invalid_credentials"), Severity.error);
-      console.error(res.error);
-    } else {
-      // manually redirect
+    try{
+      const res = await api.post("/api/auth/login", {
+        email: email,
+        password: password,
+      });
+      console.log(res.data);
+      setAuthToken(res.data.access_token);
       showMessage(t("successful_login"), Severity.success);
-      // window.location.href = "/";
       router.push("/");
+    }catch(err){
+      showMessage(t("invalid_credentials"), Severity.error);
     }
   };
 

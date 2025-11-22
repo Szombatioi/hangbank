@@ -10,7 +10,20 @@ export class AppController {
   async login(@Body() body: {email: string, password: string}){
     const user = await this.appService.validateUser(body.email, body.password);
     if (!user) throw new UnauthorizedException('Invalid credentials');
-    return user; // return user data (no password)
+
+    //Create JWT
+    const jwtToken = await this.appService.generateToken(user);
+    return {
+      access_token: jwtToken.access_token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        birthdate: user.birthdate,
+        gender: user.gender,
+        username: user.username,
+      }
+    };
   }
 
   @Post('register')

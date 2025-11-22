@@ -3,13 +3,13 @@ import { Box, Paper, Typography, Button, Grid } from "@mui/material";
 import { t } from "i18next";
 import CorpusBlockCard from "./corpus_block_card";
 import { useEffect, useRef, useState } from "react";
-import api from "../axios";
+import api, { getUserByToken } from "../axios";
 import { Severity, useSnackbar } from "../contexts/SnackbarProvider";
 import { useTranslation } from "react-i18next";
 import { SpeakerType } from "../project/new/corpus_based_fragment";
-import { useSession } from "next-auth/react";
 import { CorpusBlockType } from "../project/new/page";
 import { useRouter } from "next/navigation";
+import { useAuth } from "../contexts/AuthContext";
 
 export interface CorpusHeaderType {
   id: string;
@@ -41,9 +41,9 @@ export default function CorpusProjectOverview({
   const { t } = useTranslation("common");
   const router = useRouter();
   const { showMessage } = useSnackbar();
-  const { data: session } = useSession();
   const [saveButtonDisabled, setSaveButtonDisabled] = useState<boolean>(false);
   const projectIdRef = useRef<string | null>(null);
+  const {user, loading} = useAuth();
 
   useEffect(() => {
     if(projectId != null) projectIdRef.current = projectId;
@@ -70,7 +70,6 @@ export default function CorpusProjectOverview({
     // }
 
     try {
-      if (!session) throw new Error("User is not logged in!");
       const res = await api.post("/dataset", {
         projectName: projectTitle,
         mode: 1,
@@ -85,7 +84,7 @@ export default function CorpusProjectOverview({
           };
         }),
         corpus_id: corpus.id,
-        creator_id: session.user.id,
+        creator_id: user!.id,
       });
       projectIdRef.current = res.data.id;
       console.log("projectId", projectId);

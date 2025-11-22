@@ -3,11 +3,10 @@ import { Box, Paper, Typography, Button, Grid } from "@mui/material";
 import { t } from "i18next";
 import CorpusBlockCard from "./corpus_block_card";
 import { useState } from "react";
-import api from "../axios";
+import api, { getUserByToken } from "../axios";
 import { Severity, useSnackbar } from "../contexts/SnackbarProvider";
 import { useTranslation } from "react-i18next";
 import { SpeakerType } from "../project/new/corpus_based_fragment";
-import { useSession } from "next-auth/react";
 import { CorpusBlockType } from "../project/new/page";
 import { useRouter } from "next/navigation";
 
@@ -25,7 +24,6 @@ export default function CorpusProjectOverview({
   const { t } = useTranslation("common");
   const router = useRouter();
   const { showMessage } = useSnackbar();
-  const { data: session } = useSession();
   const [saveButtonDisabled, setSaveButtonDisabled] = useState<boolean>(false);
 
   const startRecordingPage = async (index: number = 0) => {
@@ -39,6 +37,7 @@ export default function CorpusProjectOverview({
   }
 
   const saveProject = async () => {
+    const auth = await getUserByToken();
     //TODO: handle convoResult too!!
 
     // if (!corpusResult) {

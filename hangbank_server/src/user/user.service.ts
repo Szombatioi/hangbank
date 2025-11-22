@@ -24,6 +24,10 @@ export class UserService {
     private readonly languageService: LanguageService
   ) {}
 
+  async findByToken(user: {userId: string, email: string}){
+    return this.findOneById(user.userId);
+  }
+
   async findAll(): Promise<User[]> {
     return this.userRepository.find();
   }

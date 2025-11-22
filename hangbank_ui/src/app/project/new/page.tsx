@@ -22,7 +22,6 @@ import CorpusBlockCard, {
 } from "@/app/components/corpus_block_card";
 import api from "@/app/axios";
 import { Severity, useSnackbar } from "@/app/contexts/SnackbarProvider";
-import { useSession } from "next-auth/react";
 import CorpusProjectOverview from "@/app/components/corpus_project_overview";
 
 //TODO: add values to Textfields
@@ -45,7 +44,6 @@ export interface CorpusBlockType {
 }
 
 export default function NewProjectPage() {
-  const {data: session} = useSession();
   
   const contentIdentifiers = ["types", "config", "overview"];
   const [active, setActive] = useState<"types" | "config" | "overview">(

@@ -20,6 +20,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { setAuthToken } from "../axios";
 
 interface PageType {
   name: string;
@@ -27,12 +28,9 @@ interface PageType {
 }
 
 interface NavbarProps {
-  signOutCallback: (
-    options?: SignOutParams<true> | undefined
-  ) => Promise<undefined>;
 }
 
-export default function Navbar({ signOutCallback }: NavbarProps) {
+export default function Navbar({  }: NavbarProps) {
   {
     const router = useRouter();
     const [pages, setPages] = useState<PageType[]>([]);
@@ -146,7 +144,10 @@ export default function Navbar({ signOutCallback }: NavbarProps) {
               <AccountCircle />
             </IconButton>
             <Button
-                  onClick={() => signOutCallback()} 
+                  onClick={() => {
+                    setAuthToken(null);
+                    router.push("/auth/login");
+                  }} 
                   sx={{ my: 2, color: "inherit", display: "block" }}
                 >
                   {t("signout")}

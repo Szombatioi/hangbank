@@ -1,5 +1,7 @@
 "use client";
+import { getUserByToken } from "@/app/axios";
 import SelectCorpusDialog from "@/app/components/dialogs/select_corpus_dialog";
+import { useAuth } from "@/app/contexts/AuthContext";
 import { useSnackbar } from "@/app/contexts/SnackbarProvider";
 import { SampleRate, sampleRates } from "@/app/record/sampleRateType";
 import { Search } from "@mui/icons-material";
@@ -15,7 +17,6 @@ import {
   Button,
 } from "@mui/material";
 import { t } from "i18next";
-import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -43,7 +44,6 @@ export default function CorpusBasedFragment({
   invokeNextStep,
 }: CorpusBasedFragmentProps) {
   const { t } = useTranslation("common");
-  const { data: session, status } = useSession();
   const { showMessage } = useSnackbar();
   const [mics, setMics] = useState<MediaDeviceInfo[]>([]);
   const [selectedMic, setSelectedMic] = useState<string>("");
@@ -59,6 +59,7 @@ export default function CorpusBasedFragment({
   const [speaker, setSpeaker] = useState<SpeakerType | null>(null); //TODO
   const [context, setContext] = useState<string>("");
   const [speechDialect, setSpeechDialect] = useState<string | null>(null);
+  const {user, loading} = useAuth();
 
   const handleButtonClick = () => {
     if (
@@ -102,10 +103,11 @@ export default function CorpusBasedFragment({
         if (audioInputs.length > 0) {
           setSelectedMic(audioInputs[0].deviceId);
           //To fill Speaker input
-          if (session?.user?.id && session.user.name) {
+
+          if (user!.id && user!.name) {
             setSpeaker({
               id: 0,
-              user: { id: session.user.id, name: session.user.name },
+              user: { id: user!.id, name: user!.name },
               mic: {
                 deviceId: audioInputs[0].deviceId,
                 deviceLabel: audioInputs[0].label,

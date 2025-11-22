@@ -16,7 +16,15 @@ export class LanguageService {
   }
 
   async findAll() {
-    return await this.languageRepository.find();
+    const languages = await this.languageRepository.find();
+    const res = languages.map((l) => ({
+      id: l.id,
+      code: l.code,
+      name: l.name,
+      isTranslated: l.isTranslated
+    }));
+    console.log(res);
+    return res;
   }
 
   async findOne(id: string) {
