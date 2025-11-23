@@ -37,8 +37,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           headers: { Authorization: `Bearer ${token}` },
         });
 
+
         setUser(res.data);
       } catch {
+        router.push("/auth/login")
         setUser(null);
       }
       setLoading(false);

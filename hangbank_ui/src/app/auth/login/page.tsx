@@ -79,6 +79,7 @@ export default function LoginPage() {
               variant="outlined"
               label={t("email")}
               type="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />

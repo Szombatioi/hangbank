@@ -78,5 +78,7 @@
     "settings_update_fail": "Nem sikerült menteni a felhasználó beállításait!",
     "fetch_settings_fail": "Nem sikerült lekérdezni a felhasználó beállításait!",
     "fetch_languages_fail": "Nem sikerült lekérdezni az elérhető nyelveket!",
-    "no_corpora_yet": "Még nincs feltöltve korpusz"
+    "no_corpora_yet": "Még nincs feltöltve korpusz",
+    "prev_block": "Következő blokk",
+    "next_block": "Előző blokk"
 }

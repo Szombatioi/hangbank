@@ -78,5 +78,7 @@
     "settings_update_fail": "Could not update settings for user!",
     "fetch_settings_fail": "Could not fetch settings for user!",
     "fetch_languages_fail": "Could not fetch available languages!",
-    "no_corpora_yet": "There are no corpora yet"
+    "no_corpora_yet": "There are no corpora yet",
+    "prev_block": "Previous block",
+    "next_block": "Next block"
 }
