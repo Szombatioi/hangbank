@@ -270,6 +270,7 @@ export class DatasetService {
       };
     }else{
       const language = await this.languageService.findOneByCode(dataset.metadata.language);
+      const chatHistory = (await this.aiChatHistoryRepository.find({where: {dataset: {id: dataset.id}}})).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
       return {
         id: dataset.id,
         projectTitle: dataset.name,
@@ -290,6 +291,12 @@ export class DatasetService {
           name: dataset.aiModel.name,
           model: dataset.aiModel.modelName,
         },
+        chatHistory: chatHistory.map(c => ({
+          id: c.id,
+          text: c.history,
+          aiSent: c.aiSent,
+          createdAt: c.createdAt
+        })),
         language: {
           code: language.code,
           name: language.name
@@ -298,8 +305,12 @@ export class DatasetService {
     }
   }
 
-  update(id: number, updateDatasetDto: UpdateDatasetDto) {
-    return `This action updates a #${id} dataset`;
+  async update(id: string, updateDatasetDto: UpdateDatasetDto) {
+    const {selectedTopic} = updateDatasetDto;
+    const dataset = await this.datasetRepository.findOne({where: {id}, relations: {metadata: true}});
+    if(!dataset) throw new NotFoundException("Dataset not found with ID: ", id);
+    if(selectedTopic) dataset.metadata.recording_context = selectedTopic;
+    await this.datasetRepository.save(dataset);
   }
 
   remove(id: number) {

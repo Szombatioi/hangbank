@@ -35,6 +35,12 @@ export interface DatasetConvoType {
   context?: string;
   speechDialect?: string;
   aiModel: AiModelType;
+  chatHistory: {
+    id: string;
+    text: string;
+    aiSent: boolean;
+    createdAt: Date;
+  }[],
   language: {
     code: string;
     name: string;

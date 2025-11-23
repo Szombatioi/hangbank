@@ -5,13 +5,16 @@ import { useRouter } from "next/navigation";
 import CorpusBlockCard, {
   CorpusBlockStatus,
 } from "./components/corpus_block_card";
+import ChatBubble from "./components/chat-bubble";
 
 //TODO :)
 export default function Home() {
   const router = useRouter();
   return (
     <>
-      <Typography variant="h4" align="center">Welcome</Typography>
+      <Typography variant="h4" align="center">
+        Welcome
+      </Typography>
       <div
         style={{
           display: "flex",

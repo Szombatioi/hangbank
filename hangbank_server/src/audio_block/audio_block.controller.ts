@@ -15,7 +15,7 @@ export class AudioBlockController {
         fileSize: 50 * 1024 * 1024, //Max 50Mb
     },
 }))
-  create(@Body() createAudioBlockDto: CreateAudioBlockDto, @UploadedFile() audioBlob: Express.Multer.File) {
+  create(@Body() createAudioBlockDto: CreateAudioBlockDto, @UploadedFile() audioBlob: Express.Multer.File | null) {
     return this.audioBlockService.create(createAudioBlockDto, audioBlob);
   }
 

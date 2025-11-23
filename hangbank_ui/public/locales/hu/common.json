@@ -82,5 +82,6 @@
     "prev_block": "Következő blokk",
     "next_block": "Előző blokk",
     "you": "Te",
-    "invalid_type": "Érvénytelen típus!"
+    "invalid_type": "Érvénytelen típus!",
+    "dataset_id_not_provided": "Nincs adathalmaz azonosító megadva!"
 }

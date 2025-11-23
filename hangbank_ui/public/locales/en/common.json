@@ -82,5 +82,6 @@
     "prev_block": "Previous block",
     "next_block": "Next block",
     "you": "You",
-    "invalid_type": "Invalid type!"
+    "invalid_type": "Invalid type!",
+    "dataset_id_not_provided": "Dataset ID was not provided!"
 }

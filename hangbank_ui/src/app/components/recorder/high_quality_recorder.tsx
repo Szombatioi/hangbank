@@ -15,17 +15,21 @@ interface RecorderProps {
   sampleRate: number; // desired sample rate for recording
   deviceId: string;
   useTranscript: boolean;
+  stopButtonSendSpaceClick?: boolean;
   onSpacePress?: (blob: Blob) => void;
   onTranscriptUpdate?: (text: string) => void;
   onRecorderStop?: (blob: Blob) => void;
   language: string;
+  continueRecordingOnSpace?: boolean;
 }
 
 export default function HighQualityRecorder({
   useTranscript,
+  stopButtonSendSpaceClick: stopButtonSendBlobBack = true,
   onSpacePress,
   onTranscriptUpdate,
   onRecorderStop,
+  continueRecordingOnSpace = true,
   deviceId,
   sampleRate,
   language,
@@ -247,7 +251,7 @@ export default function HighQualityRecorder({
     }
   };
 
-  const stopRecording = async () => {
+  const stopRecording = async (spacePressed: boolean) => {
     if (
       !audioContextRef.current ||
       !workletNodeRef.current ||
@@ -281,7 +285,7 @@ export default function HighQualityRecorder({
     setAudioUrl(URL.createObjectURL(wavBlob));
 
     let sentBlob = false;
-    if (onSpacePress) {
+    if (onSpacePress && spacePressed) {
       console.log("OnSpacePress pressed in recorder");
       onSpacePress(wavBlob); //send it back
       sentBlob = true;
@@ -295,6 +299,8 @@ export default function HighQualityRecorder({
     const handleKeyDown = async (event: KeyboardEvent) => {
       if (onSpacePress && event.code === "Space" && isRecordingRef.current) {
         event.preventDefault(); // Megakadályozza az oldal görgetését
+        // event.stopImmediatePropagation(); // stops your page-level listener
+
 
         console.log(
           "Spacebar: Blokkváltás. Jelenlegi Blob mentése és nullázása."
@@ -302,8 +308,8 @@ export default function HighQualityRecorder({
 
         //Send currently recorded blob to caller side
         if (onSpacePress != null) {
-          await stopRecording();
-          await startRecording();
+          await stopRecording(true);
+          if(continueRecordingOnSpace) await startRecording();
           console.log("Előző blokk Blob-ja elküldve.");
         }
       }
@@ -353,7 +359,7 @@ export default function HighQualityRecorder({
               if (!isRecording) {
                 startRecording();
               } else {
-                stopRecording();
+                stopRecording(false);
                 //   if (isPaused) {
                 //     resumeRecording();
                 //   } else {

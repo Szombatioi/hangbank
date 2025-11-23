@@ -9,7 +9,7 @@ export default class GeminiAI implements AIModel{
     chat: any;
     ai: GoogleGenAI;
     language: string = "en";
-    initialPrompt: string = "Írj témákat, amikről tudnánk beszélgetni. Ha kiválasztottam valamelyiket, akkor te kérdezz, én meg válaszolok rá. A témák kiírásánál csak a témákat írd ki sorszámozva, más szöveg ne szerepeljen.";
+    initialPrompt: string = `Írj témákat, amikről tudnánk beszélgetni. Ha kiválasztottam valamelyiket, akkor te kérdezz, én meg válaszolok rá. A témák kiírásánál csak a témákat írd ki sorszámozva, más szöveg ne szerepeljen. Ne használj díszítőelemeket (pl. félkövér szöveg, **, stb.)`;
 
     createChat = async () => {
         this.chat = this.ai.chats.create({model: this.modelName});
@@ -24,18 +24,19 @@ export default class GeminiAI implements AIModel{
         
 
         if(this.language != "hu-HU"){
-            const translatePrompt = `Fordítsd le a következő szöveget a következő nyelvre: ${this.language}\n${this.initialPrompt}. A válaszod csakis a fordított szövegből álljon!`;
-            try{
-                console.log("Sending translation message");
-                const translatedResponse = await this.chat.sendMessage({ message: translatePrompt });
-                this.initialPrompt = translatedResponse.text;
-            }catch(error){
-                console.error("Error translating initial prompt:", error);
-            }
+            this.initialPrompt = this.initialPrompt + `Kizárólag a következő nyelven beszélgessünk: ${this.language}` 
+            // const translatePrompt = `Fordítsd le a következő szöveget a következő nyelvre: ${this.language}\n${this.initialPrompt}. A válaszod csakis a fordított szövegből álljon!`;
+            // try{
+            //     console.log("Sending translation message");
+            //     const translatedResponse = await this.chat.sendMessage({ message: translatePrompt });
+            //     this.initialPrompt = translatedResponse.text;
+            // }catch(error){
+            //     console.error("Error translating initial prompt:", error);
+            // }
         }
 
         //Sending first message to the AI to receive topics we can talk about
-        console.log("Sending initial message");
+        
         const initialResponse = await this.chat.sendMessage({ message: this.initialPrompt });
         console.log(initialResponse);
         return initialResponse.text;

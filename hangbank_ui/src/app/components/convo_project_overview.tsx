@@ -79,8 +79,8 @@ export default function ConvoProjectOverview({
       const res = await api.post("/dataset", {
         projectName: title,
         mode: RecordingMode.Conversation,
-        recordingContext: context,
-        language: language,
+        recordingContext: null, //We do not set it, because this will be our selected topic!
+        language: language.code,
         speakers: [
           {
             id: speaker.id,
