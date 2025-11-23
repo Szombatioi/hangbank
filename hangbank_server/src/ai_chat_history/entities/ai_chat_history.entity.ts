@@ -9,12 +9,18 @@ export class AiChatHistory {
 
     //AI model
     @ManyToOne(() => AiModel, { nullable: false })
-    ai_model: AiModel;
+    aiModel: AiModel;
 
     //Dataset - when you want to fetch the dataset's chat history you need to loop through the ai_chat_history table
     @OneToOne(() => Dataset, { onDelete: 'CASCADE' })
     @JoinColumn()
     dataset: Dataset;
+
+    @Column()
+    aiSent: boolean; //Did the AI send the message
+
+    @Column()
+    createdAt: Date;
 
     //History - not nullable, because once you save, you have history
     @Column({nullable: false, type: "text"})

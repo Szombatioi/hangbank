@@ -74,6 +74,7 @@ export default function CorpusProjectOverview({
         projectName: projectTitle,
         mode: 1,
         recordingContext: context,
+        language: corpus.language,
         speakers: speakers.map((s) => {
           return {
             id: s.user.id,

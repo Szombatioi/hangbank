@@ -12,10 +12,10 @@ import { useAuth } from "../contexts/AuthContext";
 interface DatasetDisplayType{
     id: string;
     title: string;
-    corpusName: string;
+    corpusName?: string;
     language: string;
-    actualBlocks: number;
-    maxBlocks: number;
+    actualBlocks?: number;
+    maxBlocks?: number;
     speakerName: string; 
     type: ProjectType;
 }
@@ -59,7 +59,7 @@ export default function MyDatasetsPage() {
                 {
                     datasets.map((i, index) => (
                         <Grid size={3} key={index}>
-                            <DatasetCard id={i.id} type={i.type} title={i.title} corpusName={i.corpusName} language={i.language} actualBlocks={i.actualBlocks} totalBlocks={i.maxBlocks} speakerName={i.speakerName} />
+                            <DatasetCard id={i.id} type={i.type} title={i.title} corpusName={i?.corpusName} language={i.language} actualBlocks={i?.actualBlocks} totalBlocks={i?.maxBlocks} speakerName={i.speakerName} />
                         </Grid>
                     ))
                 }

@@ -80,5 +80,7 @@
     "fetch_languages_fail": "Could not fetch available languages!",
     "no_corpora_yet": "There are no corpora yet",
     "prev_block": "Previous block",
-    "next_block": "Next block"
+    "next_block": "Next block",
+    "you": "You",
+    "invalid_type": "Invalid type!"
 }

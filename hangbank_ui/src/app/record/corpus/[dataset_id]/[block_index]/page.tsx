@@ -4,7 +4,7 @@ import api from "@/app/axios";
 import { CorpusBlockStatus } from "@/app/components/corpus_block_card";
 import HighQualityRecorder from "@/app/components/recorder/high_quality_recorder";
 import { Severity, useSnackbar } from "@/app/contexts/SnackbarProvider";
-import { DatasetType } from "@/app/my_datasets/overview/[id]/page";
+import { DatasetCorpusType } from "@/app/my_datasets/overview/[id]/[type]/page";
 import { CorpusBlockType } from "@/app/project/new/page";
 import Recorder from "@/app/record/recorder copy";
 import {
@@ -75,7 +75,7 @@ export default function RecordPage() {
     };
   }, []);
 
-  const [dataset, setDataset] = useState<DatasetType | null>(null);
+  const [dataset, setDataset] = useState<DatasetCorpusType | null>(null);
   const [blocks, setBlocks] = useState<CorpusBlockWithText[] | null>(null);
   const saveableAudioBlocksRef = useRef<SaveableAudioBlock[]>([]);
 
@@ -153,7 +153,7 @@ export default function RecordPage() {
 
   const setup = async () => {
     //Get dataset
-    const dataset = await api.get<DatasetType>(`/dataset/${params.dataset_id}`);
+    const dataset = await api.get<DatasetCorpusType>(`/dataset/${params.dataset_id}`);
     setDataset(dataset.data);
     console.log("currentBlockIndex: ", currentBlockIndex);
     //Get [n-2, n+3] blocks
@@ -199,7 +199,7 @@ export default function RecordPage() {
     setFollowingBlockTexts(array2);
   };
 
-  const datasetRef = useRef<DatasetType | null>(null);
+  const datasetRef = useRef<DatasetCorpusType | null>(null);
   const blocksRef = useRef<CorpusBlockWithText[] | null>(null);
   const currentBlockIndexRef = useRef<number>(block_index);
   useEffect(() => {

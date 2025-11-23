@@ -1,8 +1,13 @@
-import { Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateDatasetDto } from './dto/create-dataset.dto';
 import { UpdateDatasetDto } from './dto/update-dataset.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Dataset } from './entities/dataset.entity';
+import { Dataset, RecordingMode } from './entities/dataset.entity';
 import { Repository } from 'typeorm';
 import { Metadata } from 'src/metadata/entities/metadata.entity';
 import { CorpusService } from 'src/corpus/corpus.service';
@@ -12,7 +17,14 @@ import { MicrophoneService } from 'src/microphone/microphone.service';
 import { Speaker } from 'src/speaker/entities/speaker.entity';
 import { Microphone } from 'src/microphone/entities/microphone.entity';
 import { sample } from 'rxjs';
-import { CorpusBlock, CorpusBlockStatus } from 'src/corpus_block/entities/corpus_block.entity';
+import {
+  CorpusBlock,
+  CorpusBlockStatus,
+} from 'src/corpus_block/entities/corpus_block.entity';
+import { AiChatHistoryService } from 'src/ai_chat_history/ai_chat_history.service';
+import { LanguageService } from 'src/language/language.service';
+import { AiChatHistory } from 'src/ai_chat_history/entities/ai_chat_history.entity';
+import { AiModel } from 'src/ai_model/entities/ai_model.entity';
 
 @Injectable()
 export class DatasetService {
@@ -26,6 +38,9 @@ export class DatasetService {
     @InjectRepository(Speaker)
     private readonly speakerRepository: Repository<Speaker>,
     @Inject() private readonly micService: MicrophoneService,
+    @InjectRepository(AiChatHistory) private readonly aiChatHistoryRepository: Repository<AiChatHistory>,
+    @InjectRepository(AiModel) private readonly aiModelRepository: Repository<AiModel>,
+    @Inject() private readonly languageService: LanguageService
   ) {}
 
   //Creates a new project with these details:
@@ -33,72 +48,135 @@ export class DatasetService {
   //Metadata
   //Empty audio blocks
   async create(createDatasetDto: CreateDatasetDto) {
-    const { projectName, recording_context, corpus_id, speakers, creator_id, mode } =
-      createDatasetDto;
+    const {
+      projectName,
+      recording_context,
+      corpus_id,
+      speakers,
+      creator_id,
+      mode,
+      language,
+      aiModel_id
+    } = createDatasetDto;
 
-    // Find corpus
-    // console.log('Find corpus');
-    const corpus = await this.corpusService.findOne(corpus_id);
-    if (!corpus)
-      throw new NotFoundException('Corpus not found with ID: ' + corpus_id);
+    console.log(mode)
+    if (mode === RecordingMode.Corpus && !corpus_id) {
+      throw new NotFoundException('Corpus ID not provided!');
+    }
 
     //Find creator
-    // console.log('Find creator');
     const creator = await this.userService.findOneById(creator_id);
     if (!creator)
       throw new NotFoundException('User not found with ID: ' + creator_id);
 
-    // console.log('Create dataset');
-    const dataset = this.datasetRepository.create({
-      name: projectName,
-      corpus,
-      mode: mode,
-      // metadata: {
-      //   recording_context,
-      //   speakers,
-      // },
-      creator: creator,
-    });
-    await this.datasetRepository.save(dataset);
+    if (corpus_id) {
+      // Find corpus
+      const corpus = await this.corpusService.findOne(corpus_id);
+      if (!corpus)
+        throw new NotFoundException('Corpus not found with ID: ' + corpus_id);
 
-    // console.log('Create metadata');
-    const metadata = await this.metadataRepository.save(
-      await this.metadataRepository.create({
-        recording_context,
-        dataset,
-      }),
-    );
+      const dataset = this.datasetRepository.create({
+        name: projectName,
+        corpus,
+        mode: mode,
+        // metadata: {
+        //   recording_context,
+        //   speakers,
+        // },
+        creator: creator,
+      });
+      await this.datasetRepository.save(dataset);
 
-    // Find speakers
-    // console.log('Find speakers');
-    const speaker_entities: Speaker[] = await Promise.all(
-      speakers.map(async (s) => {
-        const speaker = await this.userService.findOneById(s.id);
-        if (!speaker)
-          //TODO this is wrong since the service returns an exception if not found
-          throw new NotFoundException('User not found with ID: ' + s.id);
+      const metadata = await this.metadataRepository.save(
+        await this.metadataRepository.create({
+          recording_context,
+          language: corpus.language,
+          dataset,
+        }),
+      );
 
-        let mic: Microphone;
-        try {
-          mic = await this.micService.findOne(s.mic_deviceId);
-        } catch (err) {
-          //NotFound
-          mic = await this.micService.create(s.mic_deviceId, s.mic_label);
-        }
-        // console.log('Create speaker entity');
-        return await this.speakerRepository.create({
-          user: speaker,
-          microphone: mic,
-          metadata: metadata,
-          samplingFrequency: s.samplingFrequency,
-          speechDialect: s.speechDialect,
-          currentAge: this.calculateAge(speaker.birthdate)
-        });
-      }),
-    );
+      // Find speakers
+      const speaker_entities: Speaker[] = await Promise.all(
+        speakers.map(async (s) => {
+          const speaker = await this.userService.findOneById(s.id);
+          if (!speaker)
+            //TODO this is wrong since the service returns an exception if not found
+            throw new NotFoundException('User not found with ID: ' + s.id);
 
-    this.speakerRepository.save(speaker_entities);
-    return dataset;
+          let mic: Microphone;
+          try {
+            mic = await this.micService.findOne(s.mic_deviceId);
+          } catch (err) {
+            //NotFound
+            mic = await this.micService.create(s.mic_deviceId, s.mic_label);
+          }
+          // console.log('Create speaker entity');
+          return await this.speakerRepository.create({
+            user: speaker,
+            microphone: mic,
+            metadata: metadata,
+            samplingFrequency: s.samplingFrequency,
+            speechDialect: s.speechDialect,
+            currentAge: this.calculateAge(speaker.birthdate),
+          });
+        }),
+      );
+
+      this.speakerRepository.save(speaker_entities);
+      return dataset;
+    } else {
+      const dataset = this.datasetRepository.create({
+        name: projectName,
+        mode: mode,
+        creator: creator,
+      });
+      await this.datasetRepository.save(dataset);
+
+      const metadata = await this.metadataRepository.save(
+        await this.metadataRepository.create({
+          recording_context,
+          language: language,
+          dataset,
+        }),
+      );
+
+      // Find speakers
+      const speaker_entities: Speaker[] = await Promise.all(
+        speakers.map(async (s) => {
+          const speaker = await this.userService.findOneById(s.id);
+          if (!speaker)
+            //TODO this is wrong since the service returns an exception if not found
+            throw new NotFoundException('User not found with ID: ' + s.id);
+
+          let mic: Microphone;
+          try {
+            mic = await this.micService.findOne(s.mic_deviceId);
+          } catch (err) {
+            //NotFound
+            mic = await this.micService.create(s.mic_deviceId, s.mic_label);
+          }
+          // console.log('Create speaker entity');
+          return await this.speakerRepository.create({
+            user: speaker,
+            microphone: mic,
+            metadata: metadata,
+            samplingFrequency: s.samplingFrequency,
+            speechDialect: s.speechDialect,
+            currentAge: this.calculateAge(speaker.birthdate),
+          });
+        }),
+      );
+
+      this.speakerRepository.save(speaker_entities);
+
+      const aiModel = await this.aiModelRepository.findOne({where: {name: aiModel_id}})
+      if(!aiModel) throw new NotFoundException("Ai model not found width ID: ", aiModel_id);
+      dataset.aiModel = aiModel;
+
+      await this.datasetRepository.save(dataset);
+
+      return dataset;
+    }
   }
 
   findAll() {
@@ -112,24 +190,24 @@ export class DatasetService {
       where: { creator: { id: id } },
       relations: {
         corpus: { corpus_blocks: true },
-        audioBlocks: {corpusBlock: true},
+        audioBlocks: { corpusBlock: true },
         metadata: { speakers: true },
       },
     });
-
 
     const datasetDisplays: DatasetDisplay[] = datasets.map((dataset) => {
       // console.log(dataset.metadata?.speakers);
       return {
         id: dataset.id,
         title: dataset.name,
-        corpusName: dataset.corpus.name,
-        language: dataset.corpus.language,
-        actualBlocks: dataset.audioBlocks.filter(a => a.corpusBlock !== null).length,
-        maxBlocks: dataset.corpus.corpus_blocks.length,
+        corpusName: dataset.mode === RecordingMode.Corpus ? dataset.corpus.name : null,
+        language: dataset.metadata.language,
+        actualBlocks: dataset.mode === RecordingMode.Corpus ? dataset.audioBlocks.filter((a) => a.corpusBlock !== null)
+          .length : null,
+        maxBlocks: dataset.mode === RecordingMode.Corpus ? dataset.corpus.corpus_blocks.length : null,
         speakerName:
           dataset.metadata?.speakers?.map((s) => s.user.name).join(',') ?? '',
-        type: dataset.mode
+        type: dataset.mode,
       };
     });
     return datasetDisplays;
@@ -140,8 +218,9 @@ export class DatasetService {
       where: { id },
       relations: {
         corpus: { corpus_blocks: true },
-        audioBlocks: {corpusBlock: true, dataset: true},
+        audioBlocks: { corpusBlock: true, dataset: true },
         metadata: { speakers: { user: true, microphone: true } },
+        aiModel: true
       },
     });
     if (!dataset)
@@ -150,37 +229,73 @@ export class DatasetService {
     // console.log(dataset.metadata.speakers);
 
     //TODO: maybe this format is not good everywhere, it was intended to return to Project Overview page
-    return {
-      id: dataset.id,
-      projectTitle: dataset.name,
-      language: dataset.corpus.language,
-      speakers: dataset.metadata.speakers.map((s) => {
-        return {
-          id: s.id,
-          user: { id: s.user.id, name: s.user.name },
-          mic: { deviceId: s.microphone.deviceId, deviceLabel: s.microphone.label },
-          samplingFrequency: s.samplingFrequency,
-          speechDialect: s.speechDialect
-        };
-      }),
-      corpus: { id: dataset.corpus.id, name: dataset.corpus.name },
-      context: dataset.metadata.recording_context,
-      corpusBlocks: dataset.corpus.corpus_blocks
-      .sort((a, b) => a.sequence - b.sequence)
-      .map((cb) => {
-        const audioBlock = dataset.audioBlocks.find((ab) => {
-          return ab.corpusBlock.id === cb.id && ab.dataset.id === dataset.id;
-        });
-        // console.log("Dataset: ",dataset.id)
-          // console.log(cb.id)
+
+    if(dataset.mode === RecordingMode.Corpus){
+      return {
+        id: dataset.id,
+        projectTitle: dataset.name,
+        language: dataset.metadata.language,
+        speakers: dataset.metadata.speakers.map((s) => {
           return {
-            id: cb.id,
-            sequence: cb.sequence,
-            filename: cb.filename,
-            status: audioBlock != null ? CorpusBlockStatus.done : CorpusBlockStatus.todo,
+            id: s.id,
+            user: { id: s.user.id, name: s.user.name },
+            mic: {
+              deviceId: s.microphone.deviceId,
+              deviceLabel: s.microphone.label,
+            },
+            samplingFrequency: s.samplingFrequency,
+            speechDialect: s.speechDialect,
           };
         }),
-    };
+        corpus: dataset.corpus && { id: dataset.corpus.id, name: dataset.corpus.name },
+        context: dataset.metadata.recording_context,
+        corpusBlocks: dataset.corpus && dataset.corpus.corpus_blocks
+          .sort((a, b) => a.sequence - b.sequence)
+          .map((cb) => {
+            const audioBlock = dataset.audioBlocks.find((ab) => {
+              return ab.corpusBlock.id === cb.id && ab.dataset.id === dataset.id;
+            });
+            // console.log("Dataset: ",dataset.id)
+            // console.log(cb.id)
+            return {
+              id: cb.id,
+              sequence: cb.sequence,
+              filename: cb.filename,
+              status:
+                audioBlock != null
+                  ? CorpusBlockStatus.done
+                  : CorpusBlockStatus.todo,
+            };
+          }),
+      };
+    }else{
+      const language = await this.languageService.findOneByCode(dataset.metadata.language);
+      return {
+        id: dataset.id,
+        projectTitle: dataset.name,
+        speakers: [{
+          id: dataset.metadata.speakers[0].id,
+          user: { id: dataset.metadata.speakers[0].user.id, name: dataset.metadata.speakers[0].user.name },
+          mic: {
+            deviceId: dataset.metadata.speakers[0].microphone.deviceId,
+            deviceLabel: dataset.metadata.speakers[0].microphone.label,
+          },
+          samplingFrequency: dataset.metadata.speakers[0].samplingFrequency,
+          speechDialect: dataset.metadata.speakers[0].speechDialect,
+
+        }],
+        context: dataset.metadata.recording_context,
+        speechDialect: dataset.metadata.speakers[0].speechDialect,
+        aiModel: {
+          name: dataset.aiModel.name,
+          model: dataset.aiModel.modelName,
+        },
+        language: {
+          code: language.code,
+          name: language.name
+        },
+      };
+    }
   }
 
   update(id: number, updateDatasetDto: UpdateDatasetDto) {
@@ -191,21 +306,20 @@ export class DatasetService {
     return `This action removes a #${id} dataset`;
   }
 
-
   private calculateAge(birthdate: Date): number {
     const today = new Date();
-    
+
     let age = today.getFullYear() - birthdate.getFullYear();
-    
+
     const hasHadBirthdayThisYear =
       today.getMonth() > birthdate.getMonth() ||
       (today.getMonth() === birthdate.getMonth() &&
-       today.getDate() >= birthdate.getDate());
-  
+        today.getDate() >= birthdate.getDate());
+
     if (!hasHadBirthdayThisYear) {
       age--;
     }
-  
+
     return age;
   }
 }

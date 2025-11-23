@@ -80,5 +80,7 @@
     "fetch_languages_fail": "Nem sikerült lekérdezni az elérhető nyelveket!",
     "no_corpora_yet": "Még nincs feltöltve korpusz",
     "prev_block": "Következő blokk",
-    "next_block": "Előző blokk"
+    "next_block": "Előző blokk",
+    "you": "Te",
+    "invalid_type": "Érvénytelen típus!"
 }

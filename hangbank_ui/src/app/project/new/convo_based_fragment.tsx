@@ -1,6 +1,7 @@
 "use client";
 
 import api from "@/app/axios";
+import { useAuth } from "@/app/contexts/AuthContext";
 import { Severity, useSnackbar } from "@/app/contexts/SnackbarProvider";
 import { SampleRate, sampleRates } from "@/app/record/sampleRateType";
 import { Search } from "@mui/icons-material";
@@ -14,9 +15,11 @@ import {
   MenuItem,
   IconButton,
   Button,
+  CircularProgress,
 } from "@mui/material";
 import { t } from "i18next";
 import { useEffect, useState } from "react";
+import { ConvoResultType } from "./page";
 
 interface AIModel {
   name: string;
@@ -40,7 +43,7 @@ interface Mic {
 }
 
 export interface ConvoBasedFragmentProps {
-  invokeNextStep: (val: {}) => void;
+  invokeNextStep: (val: ConvoResultType) => void;
 }
 
 export default function ConvoBasedFragment({
@@ -53,6 +56,7 @@ export default function ConvoBasedFragment({
   const [availableLanguages, setAvailableLanguages] = useState<LanguageType[]>(
     []
   );
+  const { user } = useAuth();
   const [availableUsers, setAvailableUsers] = useState<User[]>([]);
   const [availableMics, setAvailableMics] = useState<Mic[]>([]);
   //When configuring this project, we do not set the Dataset title here, only when we choose the topic
@@ -65,6 +69,10 @@ export default function ConvoBasedFragment({
   const [selectedFrequency, setSelectedFrequency] = useState<SampleRate>(22500);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedMic, setSelectedMic] = useState<Mic | null>(null);
+  
+  const [projectTitle, setProjectTitle] = useState<string>("");
+  const [context, setContext] = useState<string>("");
+  const [speechDialect, setSpeechDialect] = useState<string>("");
 
   //TODO: this will only be needed when we handle user-user convo
   // const [userMicPairs, setUserMicPairs] = useState<{ user: User; mic: Mic }[]>([]);
@@ -95,6 +103,7 @@ export default function ConvoBasedFragment({
       try {
         const response = await api.get<User[]>("/user");
         setAvailableUsers(response.data);
+        setSelectedUser(response.data[0]);
       } catch (error) {
         console.error("Error fetching users:", error);
       }
@@ -116,13 +125,36 @@ export default function ConvoBasedFragment({
   }, []);
 
   const handleButtonClick = () => {
-    if (!selectedModel || !selectedLanguage || !selectedUser || !selectedMic) {
+    if (!projectTitle || !selectedModel || !selectedLanguage || !selectedUser || !selectedMic) {
       showMessage(t("pls_fill_all_fields"), Severity.error);
       return;
     }
 
-    invokeNextStep({});
+    invokeNextStep({
+      title: projectTitle,
+      aiModel: {
+        name: selectedModel.name,
+        model: selectedModel.modelName,
+      },
+      language: {
+        code: selectedLanguage.code,
+        name: selectedLanguage.name,
+      },
+      speaker: {
+        id: selectedUser.id,
+        name: selectedUser.name
+      },
+      microphone: {
+        deviceId: selectedMic.deviceId,
+        label: selectedMic.label,
+      },
+      samplingFrequency: selectedFrequency,
+      speechDialect: speechDialect,
+      context: context,
+    });
   };
+
+  if (!user) return <CircularProgress />;
 
   return (
     <>
@@ -133,6 +165,24 @@ export default function ConvoBasedFragment({
           </Typography>
 
           <Grid container spacing={2}>
+          <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
+              <Typography sx={{ width: 200, fontWeight: 500 }}>
+                {t("title")}:
+              </Typography>
+            </Grid>
+            <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
+              <TextField
+                variant="outlined"
+                size="small"
+                fullWidth
+                placeholder={t("enter_title")}
+                required
+                value={projectTitle}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  setProjectTitle(e.target.value);
+                }}
+              />
+            </Grid>
             {/* Model */}
             <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
               <Typography sx={{ width: 200, fontWeight: 500 }}>
@@ -193,9 +243,23 @@ export default function ConvoBasedFragment({
             </Grid>
             <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
               <Select
+                disabled
                 fullWidth
-                value={selectedUser ? selectedUser.id : ""}
+                value={
+                  selectedUser
+                    ? selectedUser.id === user.id
+                      ? selectedUser.id
+                      : selectedUser.id
+                    : ""
+                }
                 displayEmpty
+                renderValue={(selected) => {
+                  if (!selected) return t("select_user");
+                  const u = availableUsers.find((user) => user.id === selected);
+                  var text = u ? `${u.name} (${u.username})` : "";
+                  if(u && u.id === user.id) text += ` (${t("you")})`
+                  return text;
+                }}
                 onChange={(e) => {
                   const user = availableUsers.find(
                     (u) => u.id === e.target.value
@@ -261,6 +325,43 @@ export default function ConvoBasedFragment({
                   </MenuItem>
                 ))}
               </Select>
+            </Grid>
+
+            <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
+              <Typography sx={{ width: 200, fontWeight: 500 }}>
+                {t("speech_dialect")}:
+              </Typography>
+            </Grid>
+            <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
+              <TextField
+                multiline
+                rows={5}
+                fullWidth
+                placeholder={t("enter_speech_dialect")}
+                value={speechDialect ?? ""}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  setSpeechDialect(e.target.value);
+                }}
+              />
+            </Grid>
+              
+            {/* Context */}
+            <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
+              <Typography sx={{ width: 200, fontWeight: 500 }}>
+                {t("recording_context")}:
+              </Typography>
+            </Grid>
+            <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
+              <TextField
+                multiline
+                rows={5}
+                fullWidth
+                placeholder={t("opt_enter_context")}
+                value={context}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  setContext(e.target.value);
+                }}
+              />
             </Grid>
           </Grid>
           <div

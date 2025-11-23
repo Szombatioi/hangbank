@@ -55,6 +55,7 @@ export default function Navbar({  }: NavbarProps) {
             alt="Hangbank Logo"
             width={40}
             height={40}
+            onClick={() => router.push("/")}
           />
             <Typography
               variant="h6"

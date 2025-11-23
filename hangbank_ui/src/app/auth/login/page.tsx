@@ -24,7 +24,7 @@ export default function LoginPage() {
       console.log(res.data);
       setAuthToken(res.data.access_token);
       showMessage(t("successful_login"), Severity.success);
-      router.push("/");
+      router.replace("/");
     }catch(err){
       showMessage(t("invalid_credentials"), Severity.error);
     }

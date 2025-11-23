@@ -1,7 +1,8 @@
 "use client";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
-import api from "../axios";
+import api, { setAuthToken } from "../axios";
+import { CircularProgress } from "@mui/material";
 
 interface User {
   id: string;
@@ -22,6 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
+
 
   useEffect(() => {
     async function loadUser() {
@@ -49,6 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loadUser();
   }, []);
 
+  if(loading) return <div style={{display: "flex", justifyContent: "center", alignItems: "center"}}><CircularProgress /></div> 
   return (
     <AuthContext.Provider value={{ user, loading }}>
       {children}

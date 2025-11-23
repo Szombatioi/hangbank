@@ -8,13 +8,17 @@ import { UserModule } from 'src/user/user.module';
 import { CorpusModule } from 'src/corpus/corpus.module';
 import { Speaker } from 'src/speaker/entities/speaker.entity';
 import { MicrophoneModule } from 'src/microphone/microphone.module';
+import { LanguageModule } from 'src/language/language.module';
+import { AiChatHistory } from 'src/ai_chat_history/entities/ai_chat_history.entity';
+import { AiModel } from 'src/ai_model/entities/ai_model.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Dataset, Metadata, Speaker]),
+    TypeOrmModule.forFeature([Dataset, Metadata, Speaker, AiChatHistory, AiModel]),
     UserModule,
     CorpusModule,
-    MicrophoneModule
+    MicrophoneModule,
+    LanguageModule,
   ],
   controllers: [DatasetController],
   providers: [DatasetService],
