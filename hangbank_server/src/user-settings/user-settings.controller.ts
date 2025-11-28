@@ -11,7 +11,7 @@ export class UserSettingsController {
   @Get()
   @UseGuards(JwtAuthGuard)
   async findByToken(@Req() req) {
-    console.log(req);
+    // console.log(req);
     const userId = req.user.sub;
     return await this.userSettingsService.findByToken(userId);
   }

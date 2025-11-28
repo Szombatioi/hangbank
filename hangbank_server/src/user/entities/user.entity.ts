@@ -20,7 +20,7 @@ export class User {
   username: string;
 
   @Column({ nullable: false })
-  name: string;
+  name: string; //Fullname
 
   @Column({ nullable: false })
   birthdate: Date;
