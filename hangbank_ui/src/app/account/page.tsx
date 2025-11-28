@@ -13,10 +13,14 @@ import {
   Grid,
   Box,
   CircularProgress,
+  Button,
+  TextField,
 } from "@mui/material";
 import { t } from "i18next";
 import { Severity, useSnackbar } from "../contexts/SnackbarProvider";
 import { useAuth } from "../contexts/AuthContext";
+import { useRouter } from "next/navigation";
+import { UpdateUserDto } from "@/dto/update-user-dto";
 
 export interface LanguageType {
   id: string;
@@ -44,11 +48,13 @@ export default function AccountPage() {
     []
   );
   const { user, loading } = useAuth();
+  const [name, setName] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
-    if (loading || !user) return;
-    console.log("Loading: ", loading)
-    console.log("User: ", user)
+    if (!user) return;
+    console.log("Loading: ", loading);
+    console.log("User: ", user);
     async function fetchUserSettings() {
       try {
         const token = getAuthToken();
@@ -92,11 +98,15 @@ export default function AccountPage() {
     //update user settings on backend
     try {
       const token = await getAuthToken();
-      const res = await api.put(`/user-settings`, {
-        languageId: language.id,
-      }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.put(
+        `/user-settings`,
+        {
+          languageId: language.id,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       //TODO: add LanguageType when i retrieve the languages
       //then when i select a new language, set with setLanguage(language.language)
       //Then save with api(...language.id...)
@@ -106,6 +116,24 @@ export default function AccountPage() {
 
     setIsLoading(false);
   };
+
+  const setNewName = async () => {
+    try{
+      const data: UpdateUserDto = {
+        name: name,
+      };
+      await api.put("/user", data, {
+        headers: {
+          Authorization: `Bearer ${getAuthToken()}`
+        }
+      });
+
+      setName("");
+      showMessage(t("save_success"), Severity.success);
+    }catch(err){
+      showMessage(t("save_fail"), Severity.success);
+    }
+  }
 
   return (
     <>
@@ -129,6 +157,30 @@ export default function AccountPage() {
               <Typography align="center" variant="h4" sx={{ mb: 4 }}>
                 {t("settings")}
               </Typography>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  gap: 32,
+                  marginTop: 32,
+                  marginBottom: 16
+                }}
+              >
+                <Typography variant="h6">{t("name")}:</Typography>
+
+                <TextField
+                  size="small"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder={t("enter_new_name")}
+                  sx={{ width: "100%", maxWidth: 300 }} // expands but never exceeds 300px
+                />
+                <Button onClick={() => setNewName()} variant="contained">
+                  {t("submit")}
+                </Button>
+              </div>
 
               <div
                 style={{
@@ -160,6 +212,15 @@ export default function AccountPage() {
                     ))}
                   </Select>
                 </FormControl>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  marginTop: 32,
+                }}
+              >
+                <Button onClick={() => router.push("account/password")} variant="contained">{t("change_password")}</Button>
               </div>
             </Paper>
           </Box>

@@ -83,5 +83,13 @@
     "next_block": "Előző blokk",
     "you": "Te",
     "invalid_type": "Érvénytelen típus!",
-    "dataset_id_not_provided": "Nincs adathalmaz azonosító megadva!"
+    "dataset_id_not_provided": "Nincs adathalmaz azonosító megadva!",
+    "change_password": "Jelszó megváltoztatása",
+    "enter_new_name": "Adja meg új nevét",
+    "current_password": "Jelenlegi jelszó",
+    "new_password": "Új jelszó",
+    "account": "Fiók",
+    "save_success": "Sikeres mentés!",
+    "save_fail": "Mentési hiba!",
+    "password_changed_successfully": "Jelszócsere sikeres"
 }
