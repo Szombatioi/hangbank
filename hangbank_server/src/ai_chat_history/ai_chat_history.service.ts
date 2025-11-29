@@ -12,11 +12,11 @@ export class AiChatHistoryService {
     private readonly aiChatHistoryRepository: Repository<AiChatHistory>,
   ) {}
 
-  async findAnyByDatasetId(datasetId: string) {
-    return await this.aiChatHistoryRepository.findOneOrFail({
-      where: { dataset: { id: datasetId } },
-    });
-  }
+  // async findAnyByDatasetId(datasetId: string) {
+  //   return await this.aiChatHistoryRepository.findOneOrFail({
+  //     where: { aiChat: { id: datasetId } },
+  //   });
+  // }
   async create(createAiChatHistoryDto: CreateAiChatHistoryDto) {
     // const { aiModelId, datasetId, aiSent, createdAt, history } =
     //   createAiChatHistoryDto;

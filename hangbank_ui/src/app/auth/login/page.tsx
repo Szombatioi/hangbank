@@ -1,31 +1,39 @@
 "use client";
 
-import api, { setAuthToken } from "@/app/axios";
+import api from "@/app/axios"; // setAuthToken-t kivettük, nem itt használjuk
 import { Severity, useSnackbar } from "@/app/contexts/SnackbarProvider";
-import { Box, Button, Divider, Grid, MenuItem, Paper, Select, TextField, Typography } from "@mui/material";
+import { useAuth } from "@/app/contexts/AuthContext"; // Importáljuk a hook-ot
+import { Box, Button, Grid, Paper, TextField, Typography } from "@mui/material";
 import { t } from "i18next";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const {showMessage} = useSnackbar();
-
+  const { showMessage } = useSnackbar();
+  
+  // A Contextből vesszük a login függvényt
+  const { login } = useAuth(); 
   const router = useRouter();
 
   const handleLogin = async () => {
-    try{
+    try {
       const res = await api.post("/api/auth/login", {
         email: email,
         password: password,
       });
-      console.log(res.data);
-      setAuthToken(res.data.access_token);
+
+      // ITT A VÁLTOZÁS:
+      // Nem mi állítjuk be a tokent és a routert, hanem átadjuk a contextnek.
+      // Ez biztosítja, hogy a User state frissüljön, mielőtt az oldal vált.
+      await login(res.data.access_token);
+      
       showMessage(t("successful_login"), Severity.success);
-      router.replace("/");
-    }catch(err){
+      // A router.replace("/") már a context-ben történik
+      
+    } catch (err) {
+      console.error(err);
       showMessage(t("invalid_credentials"), Severity.error);
     }
   };

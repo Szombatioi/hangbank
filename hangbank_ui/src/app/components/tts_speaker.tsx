@@ -29,7 +29,7 @@ const TTSSpeaker = forwardRef<TTSHandle, TTSProps>((props, ref) => {
         utterance.text = text;
         utterance.lang = props.lang ?? "hu-HU";
         utterance.pitch = props.pitch ?? 0;
-        utterance.rate = props.rate ?? 1
+        utterance.rate = props.rate ?? 1.4
         utterance.volume = props.volume ?? 1
 
         //TODO make a selection for the given language

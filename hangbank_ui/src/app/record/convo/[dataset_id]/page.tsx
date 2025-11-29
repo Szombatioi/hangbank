@@ -17,7 +17,7 @@ import TTSSpeaker, { TTSHandle } from "@/app/components/tts_speaker";
 import { useTranslation } from "react-i18next";
 import HighQualityRecorder from "@/app/components/recorder/high_quality_recorder";
 import ChatBubble from "@/app/components/chat-bubble";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import api from "@/app/axios";
 import { DatasetConvoType } from "@/app/my_datasets/overview/[id]/[type]/page";
 import { Severity, useSnackbar } from "@/app/contexts/SnackbarProvider";
@@ -33,9 +33,16 @@ interface SaveableConvoType {
   };
 }
 
+export interface ResponseDto {
+  text: string;
+  aiSent: boolean;
+  createdAt: Date;
+}
+
 export default function ConvoBasedRecordingPage() {
   const { t } = useTranslation("common");
   const { showMessage } = useSnackbar();
+  const router = useRouter();
   const params = useParams<{ dataset_id: string }>();
   const [dataset, setDataset] = useState<DatasetConvoType | null>(null);
   const datasetRef = useRef<DatasetConvoType | null>(null);
@@ -52,9 +59,7 @@ export default function ConvoBasedRecordingPage() {
   const [isWaitingForResponse, setIsWaitingForResponse] =
     useState<boolean>(false);
 
-  const [responses, setResponses] = useState<
-    { text: string; aiSent: boolean; createdAt: Date }[]
-  >([]);
+  const [responses, setResponses] = useState<ResponseDto[]>([]);
 
   const hasStartedChat = useRef(false);
   const topicSelected = useRef(false);
@@ -88,17 +93,20 @@ export default function ConvoBasedRecordingPage() {
         );
         setDataset(dataset_res.data);
 
+
+        const history = dataset_res.data.aiChat.aiChatHistory.sort(
+          (a1,a2) => new Date(a1.createdAt).getTime() - new Date(a2.createdAt).getTime()
+        ).map((c) => ({
+          text: c.text,
+          aiSent: c.aiSent,
+          createdAt: c.createdAt,
+      }));
+
         //Set previous responses
-        responses.push(
-          ...dataset_res.data.chatHistory.map((c) => ({
-            text: c.text,
-            aiSent: c.aiSent,
-            createdAt: c.createdAt,
-          }))
-        );
+        setResponses(history);
 
         console.log(dataset_res.data);
-        if(dataset_res.data.context){
+        if (dataset_res.data.context) {
           topicSelected.current = true;
           setSelectedTopic(dataset_res.data.context);
         }
@@ -118,41 +126,58 @@ export default function ConvoBasedRecordingPage() {
   //   const [aiModel, setAiModel] = useState<AIModel | null>(null)
 
   const sendMessage = async () => {
-    console.log(transcriptRef.current);
-    if (!transcriptRef || !transcriptRef.current) return;
+    // 1. Biztonsági mentés a jelenlegi állapotról
+    const userText = transcriptRef.current;
+    if (!transcriptRef || !userText) return;
+
+    // 2. ITT KELL LÉTREHOZNI A DÁTUMOT (mielőtt várunk az AI-ra)
+    const userMessageDate = new Date();
 
     setIsWaitingForResponse(true);
-    console.log("Ref: ", transcriptRef.current);
-    console.log("Is AI model null? ", aiModelRef.current === null);
-    const res = await aiModelRef.current!.sendMessage(transcriptRef.current);
-    if (!transcriptRef.current) throw Error("Transcript is null!");
+    
+    // 3. Elküldjük az üzenetet és várunk (ez időbe telik)
+    const res = await aiModelRef.current!.sendMessage(userText);
+    
+    // 4. AI válaszának dátuma
+    const aiMessageDate = new Date();
 
+    if (!userText) throw Error("Transcript is null!");
+
+    // UI frissítés (itt is használd a mentett dátumokat a konzisztencia miatt)
     setResponses((prev) => [
       ...prev,
-      { text: transcriptRef.current!, aiSent: false, createdAt: new Date() },
+      { text: userText, aiSent: false, createdAt: userMessageDate }, 
     ]);
 
     if (ttsSpeakerRef.current) ttsSpeakerRef.current.speak(res);
+    
     setResponses((prev) => [
       ...prev,
-      { text: res, aiSent: true, createdAt: new Date() },
+      { text: res, aiSent: true, createdAt: aiMessageDate },
     ]);
 
-    console.log(
-      "Dataset ref before saveableitemsref push: ",
-      datasetRef.current
-    );
-    console.log("Dataset before saveableitemsref push: ", dataset);
     if (!actualBlobRef.current) throw Error("Actual blob is null!");
+    
+    // 5. Mentés a referenciába a KORÁBBI dátummal
     saveableItemsRef.current.push({
       blob: actualBlobRef!.current,
       aiChat: {
-        text: transcriptRef.current,
+        text: userText, // Használd a mentett változót
         aiSent: false,
-        aiModelName: datasetRef.current!.aiModel.model,
-        createdAt: new Date(),
+        aiModelName: datasetRef.current!.aiChat.aiModel.modelName,
+        createdAt: userMessageDate, // <--- A mentett, korábbi dátum
       },
     });
+
+    saveableItemsRef.current.push({
+      blob: null,
+      aiChat: {
+        text: res,
+        aiSent: true,
+        aiModelName: datasetRef.current!.aiChat.aiModel.modelName,
+        createdAt: aiMessageDate // <--- Az új dátum
+      }
+    })
 
     console.log("Saveable items: ", saveableItemsRef.current);
     setTranscription(null);
@@ -161,6 +186,7 @@ export default function ConvoBasedRecordingPage() {
 
   useEffect(() => {
     if (!datasetRef.current || !dataset) return;
+    console.log(datasetRef.current);
     async function startChat() {
       if (hasStartedChat.current) return;
       hasStartedChat.current = true;
@@ -169,7 +195,7 @@ export default function ConvoBasedRecordingPage() {
         const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
         let model = new GeminiAI(
           apiKey!,
-          datasetRef.current?.aiModel.model,
+          datasetRef.current?.aiChat.aiModel.modelName,
           datasetRef.current?.language.code
         );
         console.log("Model: ", model);
@@ -177,9 +203,47 @@ export default function ConvoBasedRecordingPage() {
 
         setIsWaitingForResponse(true);
         //TODO: load history here if there is any and prevent startChat
-        const topics = await model.startChat();
-        console.log(`Topics: ${topics}`);
-        setPossibleTopics(topics.split("\n"));
+        if (datasetRef.current?.aiChat.topic && datasetRef.current?.aiChat.topic !== "") {
+          setSelectedTopic(datasetRef.current!.aiChat.topic);
+          topicSelected.current = true;
+          await model.createChat();
+          const res = await model.continueChat(
+            datasetRef.current!.aiChat.topic,
+            datasetRef.current!.aiChat.aiChatHistory.length > 0
+              ? datasetRef.current!.aiChat.aiChatHistory.map((ch) => ({
+                  text: ch.text,
+                  aiSent: ch.aiSent,
+                }))
+              : []
+          );
+
+          const response: ResponseDto = {
+            text: res, 
+            aiSent: true, 
+            createdAt: new Date()
+          };
+
+          saveableItemsRef.current.push({
+            blob: null,
+            aiChat: {
+              text: response.text,
+              aiSent: response.aiSent,
+              aiModelName: datasetRef.current!.aiChat.aiModel.modelName,
+              createdAt: response.createdAt
+            }
+          })
+
+          setResponses([...datasetRef.current!.aiChat.aiChatHistory.map((ch) => ({
+            text: ch.text,
+            aiSent: ch.aiSent,
+            createdAt: ch.createdAt,
+          })),
+          response,]);
+        } else {
+          const topics = await model.startChat();
+          console.log(`Topics: ${topics}`);
+          setPossibleTopics(topics.split("\n"));
+        }
         setIsWaitingForResponse(false);
         // setResponses((prev) => [...prev, initResponse]);
       } catch (err) {
@@ -208,8 +272,14 @@ export default function ConvoBasedRecordingPage() {
   // }, []);
 
   const chooseTopicNumber = async (index: number) => {
+    console.log("?????????");
     try {
-      setSelectedTopic(possibleTopics[index-1])
+      console.log("Choosing topic...");
+      setSelectedTopic(possibleTopics[index - 1]);
+      const topicRes = await api.patch(`/dataset/${dataset?.id}`, {
+        selectedTopic: possibleTopics[index - 1],
+      });
+      console.log("Topic updated");
       const res = await aiModelRef.current!.sendMessage(`${index}`);
       console.log("Res: ", res);
       setResponses((prev) => [
@@ -231,6 +301,7 @@ export default function ConvoBasedRecordingPage() {
 
   const saveProgress = async () => {
     console.log("Save progress: ", saveableItemsRef.current);
+    
     //corpusBlockId, datasetId, speakerId, and the Blob as File form
     if (!datasetRef || !datasetRef.current) {
       console.log("Could not save progress");
@@ -245,14 +316,16 @@ export default function ConvoBasedRecordingPage() {
 
       const formData = new FormData();
       console.log("I: ", i);
-      if(selectedTopic && i === 0){
-        console.log("Sending selected topic too: ", selectedTopic.replace(/^\s*\d+[\.\)]\s*/, ""));
+      if (selectedTopic && i === 0) {
+        console.log(
+          "Sending selected topic too: ",
+          selectedTopic.replace(/^\s*\d+[\.\)]\s*/, "")
+        );
         formData.append("selectedTopic", selectedTopic!);
       }
-      if(a.blob){
+      if (a.blob) {
         formData.append("file", a.blob); //Blob is a .wav blob
-      }
-      else{
+      } else {
         // formData.append("file", null);
       }
       formData.append("datasetId", datasetRef!.current!.id);
@@ -260,7 +333,11 @@ export default function ConvoBasedRecordingPage() {
         "speakerId",
         datasetRef.current!.speakers[0].id.toString()
       ); //datasetRef!.current!.speakers[0].id);
-      formData.append("chatHistory", JSON.stringify(a.aiChat));
+      formData.append("chatHistory", JSON.stringify({
+        aiSent: a.aiChat.aiSent,
+        text: a.aiChat.text,
+        createdAt: a.aiChat.createdAt
+      }));
 
       const task = api
         .post("/audio-block", formData, {
@@ -279,6 +356,8 @@ export default function ConvoBasedRecordingPage() {
     if (errors.length > 0) {
       showMessage(`${t("errors_occured")}: ${errors.join("\n")}`);
     }
+    showMessage(t("save_success"), Severity.success);
+    router.replace("/my_datasets");
   };
 
   if (!datasetRef.current || !dataset) return <CircularProgress />;
@@ -298,11 +377,13 @@ export default function ConvoBasedRecordingPage() {
             <Typography variant="h3" align="center">
               {t("dataset")}: {dataset?.projectTitle}
             </Typography>
-            <Tooltip title={t("save")}>
-              <IconButton onClick={() => saveProgress()}>
-                <Save />
-              </IconButton>
-            </Tooltip>
+            {dataset && (
+              <Tooltip title={t("save")}>
+                <IconButton onClick={() => saveProgress()}>
+                  <Save />
+                </IconButton>
+              </Tooltip>
+            )}
           </div>
           {aiModelRef && aiModelRef.current ? (
             <>
@@ -339,6 +420,7 @@ export default function ConvoBasedRecordingPage() {
                     {possibleTopics.map((t, i) => (
                       <Button
                         key={i}
+                        disabled={!aiModelRef.current}
                         onClick={() => chooseTopicNumber(i + 1)}
                         sx={{ justifyContent: "flex-start" }}
                       >
@@ -374,6 +456,9 @@ export default function ConvoBasedRecordingPage() {
                   alignItems: "center",
                 }}
               >
+                <Typography align="center">
+                  {t("selected_topic")}: {selectedTopic}
+                </Typography>
                 {responses.map((r, i) => (
                   <ChatBubble
                     key={i}
@@ -464,7 +549,9 @@ export default function ConvoBasedRecordingPage() {
               <div style={{ display: "flex", justifyContent: "center" }}>
                 <CircularProgress />
               </div>
-              <Typography variant="h4">The AI model is loading</Typography>
+              <Typography align="center" variant="h4">
+                The AI model is loading
+              </Typography>
             </>
           )}
         </Paper>

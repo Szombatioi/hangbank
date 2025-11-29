@@ -1,3 +1,4 @@
+import { AiChat } from "src/ai-chat/entities/ai-chat.entity";
 import { AiChatHistory } from "src/ai_chat_history/entities/ai_chat_history.entity";
 import { AiModel } from "src/ai_model/entities/ai_model.entity";
 import { AudioBlock } from "src/audio_block/entities/audio_block.entity";
@@ -37,6 +38,11 @@ export class Dataset {
     @ManyToOne(() => Corpus, {nullable: true}) //can be null, in order to use the Conversaton-based solution (its corpus is uploaded later)
     corpus: Corpus;
 
-    @ManyToOne(() => AiModel, {nullable: true}) //can be null, in order to use the Conversaton-based solution (its corpus is uploaded later)
-    aiModel: AiModel;
+    @OneToOne(() => AiChat, (aiChat) => aiChat.dataset, {
+        nullable: true,
+        cascade: true,
+        onDelete: "CASCADE" // or CASCADE if you want to delete AiChat with dataset
+    })
+    @JoinColumn()
+    aiChat: AiChat | null;
 }

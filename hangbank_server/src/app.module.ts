@@ -1,4 +1,4 @@
-import { JwtModule } from "@nestjs/jwt";
+import { JwtModule } from '@nestjs/jwt';
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -29,7 +29,9 @@ import { LanguageModule } from './language/language.module';
 import { Language } from './language/entities/language.entity';
 import { UserSettingsModule } from './user-settings/user-settings.module';
 import { UserSettings } from './user-settings/entities/user-setting.entity';
-import { JwtStrategy } from "./jwt.strategy";
+import { JwtStrategy } from './jwt.strategy';
+import { AiChatModule } from './ai-chat/ai-chat.module';
+import { AiChat } from './ai-chat/entities/ai-chat.entity';
 
 @Module({
   imports: [
@@ -43,12 +45,28 @@ import { JwtStrategy } from "./jwt.strategy";
       username: process.env.DB_USER,
       password: process.env.DB_PASS,
       database: process.env.DB_NAME,
-      entities: [User, Metadata, Dataset, AudioBlock, CorpusBlock, Corpus, Microphone, Speaker, AiModel, AiChatHistory, Language, UserSettings],
+      entities: [
+        User,
+        Metadata,
+        Dataset,
+        AudioBlock,
+        CorpusBlock,
+        Corpus,
+        Microphone,
+        Speaker,
+        AiModel,
+        AiChatHistory,
+        AiChat,
+        Language,
+        UserSettings,
+      ],
       synchronize: true, //TODO: replace this with migrations in production
     }),
     JwtModule.register({
-      secret: process.env.JWT_SECRET || "c76ed98e2e5f8b6e1fcba0d68222bd4faa9a9a15bdb7772c5ba3dbae1d264d62",
-      signOptions: { expiresIn: "1h" },
+      secret:
+        process.env.JWT_SECRET ||
+        'c76ed98e2e5f8b6e1fcba0d68222bd4faa9a9a15bdb7772c5ba3dbae1d264d62',
+      signOptions: { expiresIn: '1h' },
     }),
     MinioModule,
     UserModule,
@@ -62,7 +80,8 @@ import { JwtStrategy } from "./jwt.strategy";
     AiModelModule,
     AiChatHistoryModule,
     LanguageModule,
-    UserSettingsModule
+    UserSettingsModule,
+    AiChatModule,
   ],
   controllers: [AppController],
   providers: [AppService, JwtStrategy],

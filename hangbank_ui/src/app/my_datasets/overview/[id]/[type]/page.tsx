@@ -29,22 +29,43 @@ export interface DatasetCorpusType {
 }
 
 export interface DatasetConvoType {
-  id: string;
-  projectTitle: string;
-  speakers: SpeakerType[];
-  context?: string;
-  speechDialect?: string;
-  aiModel: AiModelType;
-  chatHistory: {
-    id: string;
-    text: string;
-    aiSent: boolean;
-    createdAt: Date;
-  }[],
-  language: {
-    code: string;
-    name: string;
-  };
+  id: string,
+  projectTitle: string,
+        speakers: [
+          {
+            id: number,
+            user: {
+              id: string,
+              name: string,
+            },
+            mic: {
+              deviceId: string,
+              deviceLabel: string,
+            },
+            samplingFrequency: number,
+            speechDialect?: string | null,
+          },
+        ],
+        context?: string | null,
+        // speechDialect: dataset.metadata.speakers[0].speechDialect,
+        aiChat: {
+          aiChatHistory: {
+            id: string,
+            text: string,
+            aiSent: boolean,
+            createdAt: Date,
+          }[],
+          aiModel: {
+            modelName: string,
+            name: string,
+          },
+          topic: string,
+        },
+
+        language: {
+          code: string,
+          name: string,
+        },
 }
 
 export default function OverviewPage() {
@@ -115,8 +136,8 @@ export default function OverviewPage() {
                     projectId={convoDataset?.id}
                     title={convoDataset!.projectTitle}
                     aiModel={{
-                      name: convoDataset!.aiModel.name,
-                      model: convoDataset!.aiModel.model,
+                      name: convoDataset!.aiChat.aiModel.name,
+                      model: convoDataset!.aiChat.aiModel.modelName,
                     }}
                     language={{
                       code: convoDataset!.language.code,

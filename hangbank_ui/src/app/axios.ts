@@ -43,6 +43,10 @@ export function setAuthToken(token?: string | null) {
   }
 }
 
+export function removeAuthToken(){
+  localStorage.removeItem("token");
+}
+
 export function getAuthToken(): string | null {
   return localStorage.getItem("token");
 }

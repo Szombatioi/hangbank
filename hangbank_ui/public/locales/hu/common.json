@@ -99,5 +99,6 @@
     "confirm": "Megerősítés",
     "cancel": "Mégse",
     "delete_success": "Sikeres törlés",
-    "delete_fail": "Hiba a törlés során!"
+    "delete_fail": "Hiba a törlés során!",
+    "selected_topic": "Választott téma"
 }

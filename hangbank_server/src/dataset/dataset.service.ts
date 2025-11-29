@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Inject,
   Injectable,
   InternalServerErrorException,
@@ -28,6 +29,8 @@ import { AiChatHistory } from 'src/ai_chat_history/entities/ai_chat_history.enti
 import { AiModel } from 'src/ai_model/entities/ai_model.entity';
 import { UserAuthDto } from 'src/user/dto/user-auth-dto';
 import { AudioBlockService } from 'src/audio_block/audio_block.service';
+import { AiChatService } from 'src/ai-chat/ai-chat.service';
+import { AiChat } from 'src/ai-chat/entities/ai-chat.entity';
 
 @Injectable()
 export class DatasetService {
@@ -47,6 +50,9 @@ export class DatasetService {
     private readonly aiModelRepository: Repository<AiModel>,
     @Inject() private readonly languageService: LanguageService,
     @Inject() private readonly audioBlockService: AudioBlockService,
+    // @Inject() private readonly aiChatService: AiChatService,
+    @InjectRepository(AiChat)
+    private readonly aiChatRepository: Repository<AiChat>,
   ) {}
 
   //Creates a new project with these details:
@@ -132,6 +138,8 @@ export class DatasetService {
       return dataset;
     } else {
       //CONVO ------------------------------------------------------------
+      
+      if(!aiModel_id) throw new BadRequestException("Ai model ID is not provided!")
       const dataset = this.datasetRepository.create({
         name: projectName,
         mode: mode,
@@ -146,34 +154,6 @@ export class DatasetService {
           dataset,
         }),
       );
-
-      // Find speakers
-      // const speaker_entities: Speaker[] = await Promise.all(
-      //   speakers.map(async (s) => {
-      //     const speaker = await this.userService.findOneById(s.id);
-      //     if (!speaker)
-      //       //TODO this is wrong since the service returns an exception if not found
-      //       throw new NotFoundException('User not found with ID: ' + s.id);
-
-      //     let mic: Microphone;
-      //     try {
-      //       mic = await this.micService.findOne(s.mic_deviceId);
-      //     } catch (err) {
-      //       //NotFound
-      //       mic = await this.micService.create(s.mic_deviceId, s.mic_label);
-      //     }
-      //     // console.log('Create speaker entity');
-      //     return await this.speakerRepository.create({
-      //       user: speaker,
-      //       microphone: mic,
-      //       metadata: metadata,
-      //       samplingFrequency: s.samplingFrequency,
-      //       speechDialect: s.speechDialect,
-      //       currentAge: this.calculateAge(speaker.birthdate),
-      //     });
-      //   }),
-      // );
-
       const speaker = await this.userService.findOneById(creator_id);
       if (!speaker)
         //TODO this is wrong since the service returns an exception if not found
@@ -201,17 +181,19 @@ export class DatasetService {
         }),
       );
 
-      const aiModel = await this.aiModelRepository.findOne({
-        where: { name: aiModel_id },
-      });
-      if (!aiModel)
-        throw new NotFoundException(
-          'Ai model not found width ID: ',
-          aiModel_id,
-        );
-      dataset.aiModel = aiModel;
+      const aiModel = await this.aiModelRepository.findOne({where: {name: aiModel_id}});
+      if(!aiModel) throw new NotFoundException("AiModel not found with name: ", aiModel_id);
 
       await this.datasetRepository.save(dataset);
+      // dataset.aiChat = await this.aiChatService.create({datasetId: dataset.id, aiModelId: aiModel_id});
+      dataset.aiChat = await this.aiChatRepository.save(
+        await this.aiChatRepository.create({
+          // topic: null, //Initially this is null
+          aiModel: aiModel,
+          aiChatHistory: [],
+          dataset: dataset,
+        })
+      )
 
       return dataset;
     }
@@ -264,7 +246,10 @@ export class DatasetService {
         corpus: { corpus_blocks: true },
         audioBlocks: { corpusBlock: true, dataset: true },
         metadata: { speakers: { user: true, microphone: true } },
-        aiModel: true,
+        aiChat: {
+          aiModel: true,
+          aiChatHistory: true
+        },
       },
     });
     if (!dataset)
@@ -296,6 +281,18 @@ export class DatasetService {
           name: dataset.corpus.name,
         },
         context: dataset.metadata.recording_context,
+        aiChat: {
+          id: dataset.aiChat?.id,
+          aiModel: {
+            modelName: dataset.aiChat?.aiModel.modelName,
+            name: dataset.aiChat?.aiModel.name,
+          },
+          aiChatHistory: dataset.aiChat?.aiChatHistory.map((ch) => ({
+            id: ch.id,
+            aiSent: ch.aiSent,
+            history: ch.history
+          }))
+        },
         corpusBlocks:
           dataset.corpus &&
           dataset.corpus.corpus_blocks
@@ -325,12 +322,16 @@ export class DatasetService {
       );
       const chatHistory = (
         await this.aiChatHistoryRepository.find({
-          where: { dataset: { id: dataset.id } },
+          where: { aiChat: { id: dataset!.aiChat!.id } },
         })
       ).sort(
         (a, b) =>
           new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
       );
+
+      console.log("Dataset aichat: ", dataset.aiChat)
+      console.log("ChatHistory: ", chatHistory)
+
       return {
         id: dataset.id,
         projectTitle: dataset.name,
@@ -351,16 +352,21 @@ export class DatasetService {
         ],
         context: dataset.metadata.recording_context,
         speechDialect: dataset.metadata.speakers[0].speechDialect,
-        aiModel: {
-          name: dataset.aiModel.name,
-          model: dataset.aiModel.modelName,
+        aiChat: {
+          aiChatHistory: chatHistory.map((c) => ({
+            id: c.id,
+            text: c.history,
+            aiSent: c.aiSent,
+            createdAt: c.createdAt,
+          })),
+          aiModel: {
+            modelName: dataset.aiChat?.aiModel.modelName,
+            name: dataset.aiChat?.aiModel.name,
+          },
+          topic: dataset.aiChat?.topic,
+          id: dataset.aiChat?.id
         },
-        chatHistory: chatHistory.map((c) => ({
-          id: c.id,
-          text: c.history,
-          aiSent: c.aiSent,
-          createdAt: c.createdAt,
-        })),
+
         language: {
           code: language.code,
           name: language.name,
@@ -373,19 +379,26 @@ export class DatasetService {
     const { selectedTopic } = updateDatasetDto;
     const dataset = await this.datasetRepository.findOne({
       where: { id },
-      relations: { metadata: true },
+      relations: { metadata: true, aiChat: true },
     });
     if (!dataset)
       throw new NotFoundException('Dataset not found with ID: ', id);
-    if (selectedTopic) dataset.metadata.recording_context = selectedTopic;
+    
+    if(dataset.mode === RecordingMode.Conversation){
+      console.log("Mode is CONVO")
+      if (selectedTopic) {
+        console.log("Topic is selected")
+        dataset.aiChat!.topic = selectedTopic; //In this case, aiChat MUST be present
+      }
+    }
+
     await this.datasetRepository.save(dataset);
   }
 
   async remove(auth: UserAuthDto, id: string) {
-    debugger;
     const {userId} = auth;
     const user = await this.userService.findOneById(userId);
-    const dataset = await this.datasetRepository.findOne({where: {id}, relations: {creator: true, audioBlocks: true}});
+    const dataset = await this.datasetRepository.findOne({where: {id}, relations: {creator: true, audioBlocks: true, aiChat: true}});
     if(!dataset) throw new NotFoundException("Dataset not found with ID: ", id);
     if(dataset.creator.id !== user.id) throw new UnauthorizedException("You have no right to delete this dataset!");
 
@@ -394,7 +407,7 @@ export class DatasetService {
       async a => await this.audioBlockService.remove(a.id),
     );
     if(dataset.mode === RecordingMode.Conversation){
-      const chatHistory = await this.aiChatHistoryRepository.find({where: {dataset: {id: dataset.id}}});
+      const chatHistory = await this.aiChatHistoryRepository.find({where: {aiChat: {id: dataset.aiChat!.id}}});
       console.log("ChatHistory: ", chatHistory);
       chatHistory.forEach(async ch => {
         await this.aiChatHistoryRepository.delete(ch);

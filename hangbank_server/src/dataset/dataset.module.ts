@@ -12,15 +12,19 @@ import { LanguageModule } from 'src/language/language.module';
 import { AiChatHistory } from 'src/ai_chat_history/entities/ai_chat_history.entity';
 import { AiModel } from 'src/ai_model/entities/ai_model.entity';
 import { AudioBlockModule } from 'src/audio_block/audio_block.module';
+import { AiChatModule } from 'src/ai-chat/ai-chat.module';
+import { AiChat } from 'src/ai-chat/entities/ai-chat.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Dataset, Metadata, Speaker, AiChatHistory, AiModel]),
+    TypeOrmModule.forFeature([Dataset, Metadata, Speaker, AiChatHistory, AiModel, AiChat]),
     UserModule,
     CorpusModule,
     MicrophoneModule,
     LanguageModule,
-    forwardRef(()=>AudioBlockModule)
+    AiChatModule,
+    forwardRef(()=>AudioBlockModule),
+    forwardRef(()=>AiChatModule)
   ],
   controllers: [DatasetController],
   providers: [DatasetService],
