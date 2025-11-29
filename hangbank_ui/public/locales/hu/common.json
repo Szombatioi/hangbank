@@ -91,5 +91,13 @@
     "account": "Fiók",
     "save_success": "Sikeres mentés!",
     "save_fail": "Mentési hiba!",
-    "password_changed_successfully": "Jelszócsere sikeres"
+    "password_changed_successfully": "Jelszócsere sikeres",
+    "delete": "Törlés",
+    "open": "Megnyitás",
+    "delete_confirm_title": "Törlés",
+    "delete_confirm_message": "Biztosan törölni akarja ezt az entitást?",
+    "confirm": "Megerősítés",
+    "cancel": "Mégse",
+    "delete_success": "Sikeres törlés",
+    "delete_fail": "Hiba a törlés során!"
 }

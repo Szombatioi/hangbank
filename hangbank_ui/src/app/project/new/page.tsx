@@ -53,7 +53,7 @@ export interface ConvoResultType {
     name: string;
   };
   speaker:{
-    id: string;
+    id: number;
     name: string;
   };
   microphone: {

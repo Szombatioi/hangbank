@@ -3,6 +3,7 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { CreateDatasetDto } from './dto/create-dataset.dto';
 import { UpdateDatasetDto } from './dto/update-dataset.dto';
@@ -25,6 +26,8 @@ import { AiChatHistoryService } from 'src/ai_chat_history/ai_chat_history.servic
 import { LanguageService } from 'src/language/language.service';
 import { AiChatHistory } from 'src/ai_chat_history/entities/ai_chat_history.entity';
 import { AiModel } from 'src/ai_model/entities/ai_model.entity';
+import { UserAuthDto } from 'src/user/dto/user-auth-dto';
+import { AudioBlockService } from 'src/audio_block/audio_block.service';
 
 @Injectable()
 export class DatasetService {
@@ -38,9 +41,12 @@ export class DatasetService {
     @InjectRepository(Speaker)
     private readonly speakerRepository: Repository<Speaker>,
     @Inject() private readonly micService: MicrophoneService,
-    @InjectRepository(AiChatHistory) private readonly aiChatHistoryRepository: Repository<AiChatHistory>,
-    @InjectRepository(AiModel) private readonly aiModelRepository: Repository<AiModel>,
-    @Inject() private readonly languageService: LanguageService
+    @InjectRepository(AiChatHistory)
+    private readonly aiChatHistoryRepository: Repository<AiChatHistory>,
+    @InjectRepository(AiModel)
+    private readonly aiModelRepository: Repository<AiModel>,
+    @Inject() private readonly languageService: LanguageService,
+    @Inject() private readonly audioBlockService: AudioBlockService,
   ) {}
 
   //Creates a new project with these details:
@@ -56,10 +62,10 @@ export class DatasetService {
       creator_id,
       mode,
       language,
-      aiModel_id
+      aiModel_id,
     } = createDatasetDto;
 
-    console.log(mode)
+    console.log(mode);
     if (mode === RecordingMode.Corpus && !corpus_id) {
       throw new NotFoundException('Corpus ID not provided!');
     }
@@ -125,6 +131,7 @@ export class DatasetService {
       this.speakerRepository.save(speaker_entities);
       return dataset;
     } else {
+      //CONVO ------------------------------------------------------------
       const dataset = this.datasetRepository.create({
         name: projectName,
         mode: mode,
@@ -141,36 +148,67 @@ export class DatasetService {
       );
 
       // Find speakers
-      const speaker_entities: Speaker[] = await Promise.all(
-        speakers.map(async (s) => {
-          const speaker = await this.userService.findOneById(s.id);
-          if (!speaker)
-            //TODO this is wrong since the service returns an exception if not found
-            throw new NotFoundException('User not found with ID: ' + s.id);
+      // const speaker_entities: Speaker[] = await Promise.all(
+      //   speakers.map(async (s) => {
+      //     const speaker = await this.userService.findOneById(s.id);
+      //     if (!speaker)
+      //       //TODO this is wrong since the service returns an exception if not found
+      //       throw new NotFoundException('User not found with ID: ' + s.id);
 
-          let mic: Microphone;
-          try {
-            mic = await this.micService.findOne(s.mic_deviceId);
-          } catch (err) {
-            //NotFound
-            mic = await this.micService.create(s.mic_deviceId, s.mic_label);
-          }
-          // console.log('Create speaker entity');
-          return await this.speakerRepository.create({
-            user: speaker,
-            microphone: mic,
-            metadata: metadata,
-            samplingFrequency: s.samplingFrequency,
-            speechDialect: s.speechDialect,
-            currentAge: this.calculateAge(speaker.birthdate),
-          });
+      //     let mic: Microphone;
+      //     try {
+      //       mic = await this.micService.findOne(s.mic_deviceId);
+      //     } catch (err) {
+      //       //NotFound
+      //       mic = await this.micService.create(s.mic_deviceId, s.mic_label);
+      //     }
+      //     // console.log('Create speaker entity');
+      //     return await this.speakerRepository.create({
+      //       user: speaker,
+      //       microphone: mic,
+      //       metadata: metadata,
+      //       samplingFrequency: s.samplingFrequency,
+      //       speechDialect: s.speechDialect,
+      //       currentAge: this.calculateAge(speaker.birthdate),
+      //     });
+      //   }),
+      // );
+
+      const speaker = await this.userService.findOneById(creator_id);
+      if (!speaker)
+        //TODO this is wrong since the service returns an exception if not found
+        throw new NotFoundException('User not found with ID: ' + creator_id);
+
+      let mic: Microphone;
+      try {
+        mic = await this.micService.findOne(speakers[0].mic_deviceId);
+      } catch (err) {
+        //NotFound
+        mic = await this.micService.create(
+          speakers[0].mic_deviceId,
+          speakers[0].mic_label,
+        );
+      }
+
+      await this.speakerRepository.save(
+        await this.speakerRepository.create({
+          user: speaker,
+          microphone: mic,
+          metadata: metadata,
+          samplingFrequency: speakers[0].samplingFrequency,
+          speechDialect: speakers[0].speechDialect,
+          currentAge: this.calculateAge(speaker.birthdate),
         }),
       );
 
-      this.speakerRepository.save(speaker_entities);
-
-      const aiModel = await this.aiModelRepository.findOne({where: {name: aiModel_id}})
-      if(!aiModel) throw new NotFoundException("Ai model not found width ID: ", aiModel_id);
+      const aiModel = await this.aiModelRepository.findOne({
+        where: { name: aiModel_id },
+      });
+      if (!aiModel)
+        throw new NotFoundException(
+          'Ai model not found width ID: ',
+          aiModel_id,
+        );
       dataset.aiModel = aiModel;
 
       await this.datasetRepository.save(dataset);
@@ -200,11 +238,17 @@ export class DatasetService {
       return {
         id: dataset.id,
         title: dataset.name,
-        corpusName: dataset.mode === RecordingMode.Corpus ? dataset.corpus.name : null,
+        corpusName:
+          dataset.mode === RecordingMode.Corpus ? dataset.corpus.name : null,
         language: dataset.metadata.language,
-        actualBlocks: dataset.mode === RecordingMode.Corpus ? dataset.audioBlocks.filter((a) => a.corpusBlock !== null)
-          .length : null,
-        maxBlocks: dataset.mode === RecordingMode.Corpus ? dataset.corpus.corpus_blocks.length : null,
+        actualBlocks:
+          dataset.mode === RecordingMode.Corpus
+            ? dataset.audioBlocks.filter((a) => a.corpusBlock !== null).length
+            : null,
+        maxBlocks:
+          dataset.mode === RecordingMode.Corpus
+            ? dataset.corpus.corpus_blocks.length
+            : null,
         speakerName:
           dataset.metadata?.speakers?.map((s) => s.user.name).join(',') ?? '',
         type: dataset.mode,
@@ -220,7 +264,7 @@ export class DatasetService {
         corpus: { corpus_blocks: true },
         audioBlocks: { corpusBlock: true, dataset: true },
         metadata: { speakers: { user: true, microphone: true } },
-        aiModel: true
+        aiModel: true,
       },
     });
     if (!dataset)
@@ -230,7 +274,7 @@ export class DatasetService {
 
     //TODO: maybe this format is not good everywhere, it was intended to return to Project Overview page
 
-    if(dataset.mode === RecordingMode.Corpus){
+    if (dataset.mode === RecordingMode.Corpus) {
       return {
         id: dataset.id,
         projectTitle: dataset.name,
@@ -247,74 +291,116 @@ export class DatasetService {
             speechDialect: s.speechDialect,
           };
         }),
-        corpus: dataset.corpus && { id: dataset.corpus.id, name: dataset.corpus.name },
+        corpus: dataset.corpus && {
+          id: dataset.corpus.id,
+          name: dataset.corpus.name,
+        },
         context: dataset.metadata.recording_context,
-        corpusBlocks: dataset.corpus && dataset.corpus.corpus_blocks
-          .sort((a, b) => a.sequence - b.sequence)
-          .map((cb) => {
-            const audioBlock = dataset.audioBlocks.find((ab) => {
-              return ab.corpusBlock.id === cb.id && ab.dataset.id === dataset.id;
-            });
-            // console.log("Dataset: ",dataset.id)
-            // console.log(cb.id)
-            return {
-              id: cb.id,
-              sequence: cb.sequence,
-              filename: cb.filename,
-              status:
-                audioBlock != null
-                  ? CorpusBlockStatus.done
-                  : CorpusBlockStatus.todo,
-            };
-          }),
+        corpusBlocks:
+          dataset.corpus &&
+          dataset.corpus.corpus_blocks
+            .sort((a, b) => a.sequence - b.sequence)
+            .map((cb) => {
+              const audioBlock = dataset.audioBlocks.find((ab) => {
+                return (
+                  ab.corpusBlock.id === cb.id && ab.dataset.id === dataset.id
+                );
+              });
+              // console.log("Dataset: ",dataset.id)
+              // console.log(cb.id)
+              return {
+                id: cb.id,
+                sequence: cb.sequence,
+                filename: cb.filename,
+                status:
+                  audioBlock != null
+                    ? cb.status === CorpusBlockStatus.warning ? CorpusBlockStatus.warning : CorpusBlockStatus.done
+                    : CorpusBlockStatus.todo,
+              };
+            }),
       };
-    }else{
-      const language = await this.languageService.findOneByCode(dataset.metadata.language);
-      const chatHistory = (await this.aiChatHistoryRepository.find({where: {dataset: {id: dataset.id}}})).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    } else {
+      const language = await this.languageService.findOneByCode(
+        dataset.metadata.language,
+      );
+      const chatHistory = (
+        await this.aiChatHistoryRepository.find({
+          where: { dataset: { id: dataset.id } },
+        })
+      ).sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      );
       return {
         id: dataset.id,
         projectTitle: dataset.name,
-        speakers: [{
-          id: dataset.metadata.speakers[0].id,
-          user: { id: dataset.metadata.speakers[0].user.id, name: dataset.metadata.speakers[0].user.name },
-          mic: {
-            deviceId: dataset.metadata.speakers[0].microphone.deviceId,
-            deviceLabel: dataset.metadata.speakers[0].microphone.label,
+        speakers: [
+          {
+            id: dataset.metadata.speakers[0].id,
+            user: {
+              id: dataset.metadata.speakers[0].user.id,
+              name: dataset.metadata.speakers[0].user.name,
+            },
+            mic: {
+              deviceId: dataset.metadata.speakers[0].microphone.deviceId,
+              deviceLabel: dataset.metadata.speakers[0].microphone.label,
+            },
+            samplingFrequency: dataset.metadata.speakers[0].samplingFrequency,
+            speechDialect: dataset.metadata.speakers[0].speechDialect,
           },
-          samplingFrequency: dataset.metadata.speakers[0].samplingFrequency,
-          speechDialect: dataset.metadata.speakers[0].speechDialect,
-
-        }],
+        ],
         context: dataset.metadata.recording_context,
         speechDialect: dataset.metadata.speakers[0].speechDialect,
         aiModel: {
           name: dataset.aiModel.name,
           model: dataset.aiModel.modelName,
         },
-        chatHistory: chatHistory.map(c => ({
+        chatHistory: chatHistory.map((c) => ({
           id: c.id,
           text: c.history,
           aiSent: c.aiSent,
-          createdAt: c.createdAt
+          createdAt: c.createdAt,
         })),
         language: {
           code: language.code,
-          name: language.name
+          name: language.name,
         },
       };
     }
   }
 
   async update(id: string, updateDatasetDto: UpdateDatasetDto) {
-    const {selectedTopic} = updateDatasetDto;
-    const dataset = await this.datasetRepository.findOne({where: {id}, relations: {metadata: true}});
-    if(!dataset) throw new NotFoundException("Dataset not found with ID: ", id);
-    if(selectedTopic) dataset.metadata.recording_context = selectedTopic;
+    const { selectedTopic } = updateDatasetDto;
+    const dataset = await this.datasetRepository.findOne({
+      where: { id },
+      relations: { metadata: true },
+    });
+    if (!dataset)
+      throw new NotFoundException('Dataset not found with ID: ', id);
+    if (selectedTopic) dataset.metadata.recording_context = selectedTopic;
     await this.datasetRepository.save(dataset);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} dataset`;
+  async remove(auth: UserAuthDto, id: string) {
+    debugger;
+    const {userId} = auth;
+    const user = await this.userService.findOneById(userId);
+    const dataset = await this.datasetRepository.findOne({where: {id}, relations: {creator: true, audioBlocks: true}});
+    if(!dataset) throw new NotFoundException("Dataset not found with ID: ", id);
+    if(dataset.creator.id !== user.id) throw new UnauthorizedException("You have no right to delete this dataset!");
+
+    //Remove: Dataset + AudioBlocks + ChatHistory if exists
+    await dataset.audioBlocks.forEach(
+      async a => await this.audioBlockService.remove(a.id),
+    );
+    if(dataset.mode === RecordingMode.Conversation){
+      const chatHistory = await this.aiChatHistoryRepository.find({where: {dataset: {id: dataset.id}}});
+      console.log("ChatHistory: ", chatHistory);
+      chatHistory.forEach(async ch => {
+        await this.aiChatHistoryRepository.delete(ch);
+      });
+    }
+    this.datasetRepository.remove(dataset);
   }
 
   private calculateAge(birthdate: Date): number {

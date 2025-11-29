@@ -37,6 +37,7 @@
     "mime-types": "^3.0.1",
     "minio": "^8.0.6",
     "multer": "^2.0.2",
+    "node-wav": "^0.0.2",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "pdf-parse": "^2.4.5",

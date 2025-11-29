@@ -17,7 +17,7 @@ export const validate = async (): Promise<boolean> => {
   api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
   try {
-    const res = api.get("/user/me", {
+    const res = await api.get("/user/me", {
       headers: { Authorization: `Bearer ${token}` },
     });
     return true;

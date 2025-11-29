@@ -1,14 +1,13 @@
 "use client";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
-import api, { setAuthToken, validate } from "../axios";
+import api, { setAuthToken, getAuthToken } from "../axios";
 import { CircularProgress } from "@mui/material";
 
 interface User {
   id: string;
   email: string;
   name: string;
-  // ...
 }
 
 interface AuthContextType {
@@ -24,56 +23,66 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    async function loadUser() {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          setLoading(false);
-          if (!["/auth/login", "/auth/register"].includes(pathname))
-            router.push("/auth/login");
-          return;
-        }
+    const token = getAuthToken();
+    if (token) {
+      setAuthToken(token);
+    }
+  }, []);
 
-        
-        const validLogin = await validate();
-        if(!validLogin)
-          router.push("/auth/login");
-          
-        const res = await api.get("/user/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+  async function fetchUser() {
+    try {
+      const res = await api.get("/user/me");
+      setUser(res.data);
+      return res.data;
+    } catch {
+      setUser(null);
+      return null;
+    }
+  }
 
-        setUser(res.data);
-      } catch {
-        router.push("/auth/login");
+  // Load user on first mount
+  useEffect(() => {
+    async function init() {
+      const token = getAuthToken();
+
+      if (!token) {
         setUser(null);
+        if (!pathname.startsWith("/auth")) router.push("/auth/login");
+        setLoading(false);
+        return;
       }
+
+      const u = await fetchUser();
+
+      if (!u && !pathname.startsWith("/auth")) {
+        router.push("/auth/login");
+      }
+
       setLoading(false);
     }
 
-    loadUser();
+    init();
   }, []);
 
+  // Redirect if navigating without auth
   useEffect(() => {
-    async function checkAuth() {
-      console.log("Auth");
-      const token = localStorage.getItem("token");
-        if (!token) {
-          if (!["/auth/login", "/auth/register"].includes(pathname))
-            router.push("/auth/login");
-          return;
-        }
-      const res = await api.get("/user/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+    if (loading) return;
+
+    if (!user && !pathname.startsWith("/auth")) {
+      router.push("/auth/login");
+      return;
     }
 
-    checkAuth();
-  }, [pathname]);
+    if (user && pathname.startsWith("/auth")) {
+      router.push("/");
+      return;
+    }
+  }, [pathname, user, loading]);
 
   if (loading)
     return (
@@ -82,11 +91,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
+          height: "100vh",
         }}
       >
         <CircularProgress />
       </div>
     );
+
   return (
     <AuthContext.Provider value={{ user, loading }}>
       {children}

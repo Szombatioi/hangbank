@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
 import { DatasetService } from './dataset.service';
 import { CreateDatasetDto } from './dto/create-dataset.dto';
 import { UpdateDatasetDto } from './dto/update-dataset.dto';
+import { JwtAuthGuard } from 'src/jwt-auth.guard';
 
 @Controller('dataset')
 export class DatasetController {
@@ -34,7 +35,8 @@ export class DatasetController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.datasetService.remove(+id);
+  @UseGuards(JwtAuthGuard)
+  remove(@Req() req, @Param('id') id: string) {
+    return this.datasetService.remove(req.user, id);
   }
 }

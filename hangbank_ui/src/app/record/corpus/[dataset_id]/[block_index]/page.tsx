@@ -32,7 +32,7 @@ import {
   Typography,
 } from "@mui/material";
 import { t } from "i18next";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import WaveSurfer from "wavesurfer.js";
 
@@ -60,6 +60,7 @@ export default function RecordPage() {
   }>();
   const block_index = parseInt(params.block_index, 10);
   const { showMessage } = useSnackbar();
+  const router = useRouter();
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -118,6 +119,10 @@ export default function RecordPage() {
     console.log("Any errors?");
     if (errors.length > 0) {
       showMessage(`${t("errors_occured")}: ${errors.join("\n")}`);
+    }
+    else{
+      showMessage(t("save_success"), Severity.success);
+      router.push("/my_datasets");
     }
   };
 

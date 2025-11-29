@@ -91,5 +91,13 @@
     "account": "Account",
     "save_success": "Save successful!",
     "save_fail": "Save failed!",
-    "password_changed_successfully": "Password changed successfully"
+    "password_changed_successfully": "Password changed successfully",
+    "delete": "Delete",
+    "open": "Open",
+    "delete_confirm_title": "Deleting",
+    "delete_confirm_message": "Are you sure want to delete this entity?",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "delete_success": "Delete was successful",
+    "delete_fail": "Fail during deletion!"
 }

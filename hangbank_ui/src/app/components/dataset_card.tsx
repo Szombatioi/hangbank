@@ -1,11 +1,16 @@
 import {
   AutoStories,
+  Delete,
   OpenInNew,
   SmartToy,
 } from "@mui/icons-material";
-import { Box, IconButton, Paper, Typography } from "@mui/material";
+import { Box, IconButton, Paper, Tooltip, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import ConfirmationDialog from "./dialogs/confirm-dialog";
+import api from "../axios";
+import { Severity, useSnackbar } from "../contexts/SnackbarProvider";
 
 export enum ProjectType {
   Corpus = 1,
@@ -34,10 +39,23 @@ export default function DatasetCard({
   speakerName,
 }: DatasetCardProps) {
   const { t } = useTranslation("common");
+  const { showMessage } = useSnackbar();
   const router = useRouter();
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+
+  const deleteDataset = async () => {
+    try{
+      const res = await api.delete(`/dataset/${id}`);
+      showMessage(t("delete_success", Severity.info));
+      window.location.reload();
+    } catch(err){
+      showMessage(t("delete_fail", Severity.error));
+    }
+  };
 
   return (
-    <Paper
+    <>
+      <Paper
       elevation={3}
       sx={{
         padding: 2,
@@ -98,6 +116,24 @@ export default function DatasetCard({
         </Typography>
         </div>
 
+        <div style={{
+          alignSelf: "end",
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 3,
+        }}>
+        <Tooltip title={t("delete")}>
+        <IconButton
+          onClick={() => setConfirmDialogOpen(true)}
+          size="large"
+          color="primary"
+          sx={{ padding: 0, margin: 0, alignSelf: "end" }}
+        >
+          <Delete />
+        </IconButton>
+        </Tooltip>
+        <Tooltip title={t("open")}>
         <IconButton
           onClick={() => router.push(`/my_datasets/overview/${id}/${type === ProjectType.Corpus ? "corpus" : "convo"}`)}
           size="large"
@@ -106,7 +142,22 @@ export default function DatasetCard({
         >
           <OpenInNew />
         </IconButton>
+        </Tooltip>
+        </div>
       </Box>
     </Paper>
+    <ConfirmationDialog 
+      open={confirmDialogOpen}
+      title={t("delete_confirm_title")}
+      message={t("delete_confirm_message")}
+      confirmText={t("confirm")}
+      cancelText={t("cancel")}
+      onConfirm={() => {
+        setConfirmDialogOpen(false);
+        deleteDataset();
+      }}
+      onCancel={() => setConfirmDialogOpen(false)}
+    />
+    </>
   );
 }

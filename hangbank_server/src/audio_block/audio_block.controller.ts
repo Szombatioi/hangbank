@@ -34,8 +34,8 @@ export class AudioBlockController {
     return this.audioBlockService.update(+id, updateAudioBlockDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.audioBlockService.remove(+id);
-  }
+  // @Delete(':id')
+  // remove(@Param('id') id: string) {
+  //   return this.audioBlockService.remove(+id);
+  // }
 }

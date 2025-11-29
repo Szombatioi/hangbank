@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateAudioBlockDto } from './dto/create-audio_block.dto';
 import { UpdateAudioBlockDto } from './dto/update-audio_block.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -8,9 +8,11 @@ import { DatasetService } from 'src/dataset/dataset.service';
 import { SpeakerService } from 'src/speaker/speaker.service';
 import { MinioService } from 'src/minio/minio.service';
 import { CorpusBlockService } from 'src/corpus_block/corpus_block.service';
-import { CorpusBlockStatus } from 'src/corpus_block/entities/corpus_block.entity';
+import { CorpusBlock, CorpusBlockStatus } from 'src/corpus_block/entities/corpus_block.entity';
 import { AiModel } from 'src/ai_model/entities/ai_model.entity';
 import { AiChatHistory } from 'src/ai_chat_history/entities/ai_chat_history.entity';
+import { checkAudioQuality, QualityMeasure } from 'src/modules/audio-quality-checker';
+import { Dataset } from 'src/dataset/entities/dataset.entity';
 
 @Injectable()
 export class AudioBlockService {
@@ -21,6 +23,7 @@ export class AudioBlockService {
     private readonly aiModelRepository: Repository<AiModel>,
     @InjectRepository(AiChatHistory)
     private readonly aiChatHistoryRepository: Repository<AiChatHistory>,
+    @Inject(forwardRef(() => DatasetService))
     @Inject() private readonly datasetService: DatasetService,
     @Inject() private readonly speakerService: SpeakerService,
     @Inject() private readonly minioService: MinioService,
@@ -31,10 +34,10 @@ export class AudioBlockService {
     createAudioBlockDto: CreateAudioBlockDto,
     audioBlob: Express.Multer.File | null,
   ) {
+    if(!audioBlob) return new BadRequestException("Audio not provided!");
     try {
       const { datasetId, speakerId, corpusBlockId, transcript, chatHistory, selectedTopic } =
         createAudioBlockDto;
-      const chatHistoryObj = JSON.parse(chatHistory);
       if (corpusBlockId && !audioBlob)
         throw new NotFoundException(
           'AudioBlob is required for this kind of save!',
@@ -46,8 +49,10 @@ export class AudioBlockService {
 
       //Check if corpusblock is provided
       if (corpusBlockId) {
+        console.log("CospusBlockId: ", corpusBlockId);
         const corpusBlock =
           await this.corpusBlockService.findOneById(corpusBlockId);
+          console.log("CospusBlock: ", corpusBlock);
         //Upload to MinIO
         const result = await this.minioService.uploadObject(
           audioBlob!,
@@ -59,6 +64,7 @@ export class AudioBlockService {
             speaker: speaker,
             dataset: dataset,
             audio_minio_link: result.url,
+            // corpusBlock: corpusBlock //Saving corpusBlock too
           }),
         );
         //We expect a transcript for a corpus block!
@@ -74,7 +80,7 @@ export class AudioBlockService {
           },
           where: {
             dataset: { id: dataset.id }, // Ensure the dataset is matched by its ID
-            corpusBlock: Not(IsNull()),
+            corpusBlock: {id: corpusBlockId}, //Fixed: not checkint Not(IsNull()) for cb, since it will delete all...
           },
         });
 
@@ -93,8 +99,8 @@ export class AudioBlockService {
 
         await this.audioBlockRepository.save(audioBlock);
 
-        //TODO: run checks for the audioBlob
-        this.runChecksForBlob(audioBlob!);
+        //run checks for the audioBlob -> do it for Convo type too!
+        this.runChecksForBlob(audioBlob!, corpusBlock);
 
         // await this.corpusBlockService.update(corpusBlockId, {status: CorpusBlockStatus.done}); //TODO: handle warnings by checking audio quality!
         //TODO: how should we show error for ai chat quality?
@@ -115,7 +121,7 @@ export class AudioBlockService {
           );
           await this.audioBlockRepository.save(audioBlock);
         }
-
+        const chatHistoryObj = JSON.parse(chatHistory);
         if (!chatHistoryObj)
           throw new NotFoundException('ChatHistory was not provided!');
 
@@ -147,11 +153,18 @@ export class AudioBlockService {
     }
   }
 
-  //This method checks for the quelity of the recorded blob
+  //This method checks for the quality of the recorded blob
   //1. Noise level (Jel/Zaj viszony)
   //2. Loudness/Quiteness
   //etc.
-  private async runChecksForBlob(audioBlob: Express.Multer.File) {}
+  private async runChecksForBlob(audioBlob: Express.Multer.File, corpusBlock: CorpusBlock) {
+    const quality: QualityMeasure = checkAudioQuality(audioBlob!);
+      if(quality.tooLoud || quality.tooNoisy || quality.tooQuiet){
+        corpusBlock.status = CorpusBlockStatus.warning;
+        //TODO: save the error as an entity
+        this.corpusBlockService.update(corpusBlock.id, {status: corpusBlock.status});
+      }
+  }
 
   findAll() {
     return `This action returns all audioBlock`;
@@ -165,7 +178,11 @@ export class AudioBlockService {
     return `This action updates a #${id} audioBlock`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} audioBlock`;
+  async remove(id: string) {
+    const audioBlock = await this.audioBlockRepository.findOne({where: {id}});
+    if(!audioBlock) throw new NotFoundException("AudioBlock not found");
+
+    this.minioService.deleteObject(audioBlock.audio_minio_link, "audio");
+    this.audioBlockRepository.remove(audioBlock);
   }
 }
