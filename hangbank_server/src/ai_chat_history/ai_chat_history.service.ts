@@ -1,11 +1,31 @@
 import { Injectable } from '@nestjs/common';
 import { CreateAiChatHistoryDto } from './dto/create-ai_chat_history.dto';
 import { UpdateAiChatHistoryDto } from './dto/update-ai_chat_history.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { AiChatHistory } from './entities/ai_chat_history.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class AiChatHistoryService {
-  create(createAiChatHistoryDto: CreateAiChatHistoryDto) {
-    return 'This action adds a new aiChatHistory';
+  constructor(
+    @InjectRepository(AiChatHistory)
+    private readonly aiChatHistoryRepository: Repository<AiChatHistory>,
+  ) {}
+
+  // async findAnyByDatasetId(datasetId: string) {
+  //   return await this.aiChatHistoryRepository.findOneOrFail({
+  //     where: { aiChat: { id: datasetId } },
+  //   });
+  // }
+  async create(createAiChatHistoryDto: CreateAiChatHistoryDto) {
+    // const { aiModelId, datasetId, aiSent, createdAt, history } =
+    //   createAiChatHistoryDto;
+    
+    // const dataset = await 
+
+    // await this.aiChatHistoryRepository.save(await this.aiChatHistoryRepository.create({
+
+    // }));
   }
 
   findAll() {

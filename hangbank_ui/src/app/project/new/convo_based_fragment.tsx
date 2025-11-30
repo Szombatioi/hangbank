@@ -1,6 +1,7 @@
 "use client";
 
 import api from "@/app/axios";
+import { useAuth } from "@/app/contexts/AuthContext";
 import { Severity, useSnackbar } from "@/app/contexts/SnackbarProvider";
 import { SampleRate, sampleRates } from "@/app/record/sampleRateType";
 import { Search } from "@mui/icons-material";
@@ -14,9 +15,12 @@ import {
   MenuItem,
   IconButton,
   Button,
+  CircularProgress,
 } from "@mui/material";
 import { t } from "i18next";
 import { useEffect, useState } from "react";
+import { ConvoResultType } from "./page";
+import { SpeakerType } from "./corpus_based_fragment";
 
 interface AIModel {
   name: string;
@@ -40,7 +44,7 @@ interface Mic {
 }
 
 export interface ConvoBasedFragmentProps {
-  invokeNextStep: (val: {}) => void;
+  invokeNextStep: (val: ConvoResultType) => void;
 }
 
 export default function ConvoBasedFragment({
@@ -53,6 +57,7 @@ export default function ConvoBasedFragment({
   const [availableLanguages, setAvailableLanguages] = useState<LanguageType[]>(
     []
   );
+  const { user } = useAuth();
   const [availableUsers, setAvailableUsers] = useState<User[]>([]);
   const [availableMics, setAvailableMics] = useState<Mic[]>([]);
   //When configuring this project, we do not set the Dataset title here, only when we choose the topic
@@ -63,11 +68,51 @@ export default function ConvoBasedFragment({
     null
   );
   const [selectedFrequency, setSelectedFrequency] = useState<SampleRate>(22500);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [selectedMic, setSelectedMic] = useState<Mic | null>(null);
+  const [speaker, setSpeaker] = useState<SpeakerType | null>(null);
+  const [selectedMic, setSelectedMic] = useState<string | null>(null);
+  
+  const [projectTitle, setProjectTitle] = useState<string>("");
+  const [context, setContext] = useState<string>("");
+  const [speechDialect, setSpeechDialect] = useState<string>("");
 
   //TODO: this will only be needed when we handle user-user convo
   // const [userMicPairs, setUserMicPairs] = useState<{ user: User; mic: Mic }[]>([]);
+
+  useEffect(() => {
+    async function getMicrophones() {
+      try {
+        // Check permission status first
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const audioInputs = devices.filter((d) => d.kind === "audioinput");
+        setAvailableMics(audioInputs);
+        if (audioInputs.length > 0) {
+          setSelectedMic(audioInputs[0].deviceId);
+          //To fill Speaker input
+
+          if (user!.id && user!.name) {
+            setSpeaker({
+              id: 0,
+              user: { id: user!.id, name: user!.name },
+              mic: {
+                deviceId: audioInputs[0].deviceId,
+                deviceLabel: audioInputs[0].label,
+              },
+              samplingFrequency: 0
+            }); //TODO:
+          }
+        }
+
+        stream.getTracks().forEach((track) => track.stop());
+      } catch (err) {
+        console.error(err);
+        setError("Could not access microphones.");
+      }
+    }
+    getMicrophones();
+  }, []);
 
   //fetching available elements
   useEffect(() => {
@@ -91,38 +136,61 @@ export default function ConvoBasedFragment({
       }
     }
 
-    async function fetchAvailableUsers() {
-      try {
-        const response = await api.get<User[]>("/user");
-        setAvailableUsers(response.data);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-      }
-    }
+    // async function fetchAvailableUsers() {
+    //   try {
+        
+    //   } catch (error) {
+    //     console.error("Error fetching users:", error);
+    //   }
+    // }
 
-    async function fetchAvailableMics() {
-      try {
-        const response = await api.get<Mic[]>("/microphone");
-        setAvailableMics(response.data);
-      } catch (error) {
-        console.error("Error fetching microphones:", error);
-      }
-    }
+    // async function fetchAvailableMics() {
+    //   try {
+    //     const response = await api.get<Mic[]>("/microphone");
+    //     setAvailableMics(response.data);
+    //   } catch (error) {
+    //     console.error("Error fetching microphones:", error);
+    //   }
+    // }
 
     fetchAvailableModels();
     fetchAvailableLanguages();
-    fetchAvailableUsers();
-    fetchAvailableMics();
+    // fetchAvailableUsers();
+    // fetchAvailableMics();
   }, []);
 
   const handleButtonClick = () => {
-    if (!selectedModel || !selectedLanguage || !selectedUser || !selectedMic) {
+    if (!projectTitle || !selectedModel || !selectedLanguage || !speaker || !selectedMic) {
       showMessage(t("pls_fill_all_fields"), Severity.error);
       return;
     }
 
-    invokeNextStep({});
+    const selectedMicLabel = availableMics.find((m) => m.deviceId === selectedMic)!.label;
+    invokeNextStep({
+      title: projectTitle,
+      aiModel: {
+        name: selectedModel.name,
+        model: selectedModel.modelName,
+      },
+      language: {
+        code: selectedLanguage.code,
+        name: selectedLanguage.name,
+      },
+      speaker: {
+        id: speaker.id,
+        name: speaker.user.name
+      },
+      microphone: {
+        deviceId: selectedMic,
+        label: selectedMicLabel,
+      },
+      samplingFrequency: selectedFrequency,
+      speechDialect: speechDialect,
+      context: context,
+    });
   };
+
+  if (!user) return <CircularProgress />;
 
   return (
     <>
@@ -133,6 +201,24 @@ export default function ConvoBasedFragment({
           </Typography>
 
           <Grid container spacing={2}>
+          <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
+              <Typography sx={{ width: 200, fontWeight: 500 }}>
+                {t("title")}:
+              </Typography>
+            </Grid>
+            <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
+              <TextField
+                variant="outlined"
+                size="small"
+                fullWidth
+                placeholder={t("enter_title")}
+                required
+                value={projectTitle}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  setProjectTitle(e.target.value);
+                }}
+              />
+            </Grid>
             {/* Model */}
             <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
               <Typography sx={{ width: 200, fontWeight: 500 }}>
@@ -193,14 +279,22 @@ export default function ConvoBasedFragment({
             </Grid>
             <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
               <Select
+                disabled
                 fullWidth
-                value={selectedUser ? selectedUser.id : ""}
+                value={speaker?.user.name + " (You)"}
                 displayEmpty
+                renderValue={(selected) => {
+                  if (!selected) return t("select_user");
+                  // const u = availableUsers.find((user) => user.id === selected);
+                  // var text = u ? `${u.name} (${u.username})` : "";
+                  // if(u && u.id === user.id) text += ` (${t("you")})`
+                  return speaker?.user.name + "(You)";
+                }}
                 onChange={(e) => {
-                  const user = availableUsers.find(
-                    (u) => u.id === e.target.value
-                  );
-                  setSelectedUser(user || null);
+                  // const user = availableUsers.find(
+                  //   (u) => u.id === e.target.value
+                  // );
+                  // setSpeaker(e.target.value);
                 }}
               >
                 <MenuItem value="" disabled>
@@ -223,13 +317,13 @@ export default function ConvoBasedFragment({
             <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
               <Select
                 fullWidth
-                value={selectedMic ? selectedMic.deviceId : ""}
+                value={selectedMic ? selectedMic : ""}
                 displayEmpty
                 onChange={(e) => {
-                  const mic = availableMics.find(
-                    (m) => m.deviceId === e.target.value
-                  );
-                  setSelectedMic(mic || null);
+                  // const mic = availableMics.find(
+                  //   (m) => m.deviceId === e.target.value
+                  // );
+                  setSelectedMic(e.target.value);
                 }}
               >
                 <MenuItem value="" disabled>
@@ -262,6 +356,43 @@ export default function ConvoBasedFragment({
                 ))}
               </Select>
             </Grid>
+
+            <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
+              <Typography sx={{ width: 200, fontWeight: 500 }}>
+                {t("speech_dialect")}:
+              </Typography>
+            </Grid>
+            <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
+              <TextField
+                multiline
+                rows={5}
+                fullWidth
+                placeholder={t("enter_speech_dialect")}
+                value={speechDialect ?? ""}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  setSpeechDialect(e.target.value);
+                }}
+              />
+            </Grid>
+              
+            {/* Context */}
+            <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
+              <Typography sx={{ width: 200, fontWeight: 500 }}>
+                {t("recording_context")}:
+              </Typography>
+            </Grid>
+            <Grid size={6} sx={{ display: "flex", alignItems: "center" }}>
+              <TextField
+                multiline
+                rows={5}
+                fullWidth
+                placeholder={t("opt_enter_context")}
+                value={context}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  setContext(e.target.value);
+                }}
+              />
+            </Grid>
           </Grid>
           <div
             style={{ marginTop: 16, display: "flex", justifyContent: "center" }}
@@ -280,3 +411,7 @@ export default function ConvoBasedFragment({
     </>
   );
 }
+function setError(arg0: string) {
+  throw new Error("Function not implemented.");
+}
+

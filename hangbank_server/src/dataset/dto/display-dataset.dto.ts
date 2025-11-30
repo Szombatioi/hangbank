@@ -1,8 +1,8 @@
 export interface DatasetDisplay{
     title: string;
-    corpusName: string;
+    corpusName?: string | null;
     language: string;
-    actualBlocks: number;
-    maxBlocks: number;
+    actualBlocks?: number | null;
+    maxBlocks?: number | null;
     speakerName: string; 
 }

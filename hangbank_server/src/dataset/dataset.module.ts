@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { DatasetService } from './dataset.service';
 import { DatasetController } from './dataset.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -8,13 +8,23 @@ import { UserModule } from 'src/user/user.module';
 import { CorpusModule } from 'src/corpus/corpus.module';
 import { Speaker } from 'src/speaker/entities/speaker.entity';
 import { MicrophoneModule } from 'src/microphone/microphone.module';
+import { LanguageModule } from 'src/language/language.module';
+import { AiChatHistory } from 'src/ai_chat_history/entities/ai_chat_history.entity';
+import { AiModel } from 'src/ai_model/entities/ai_model.entity';
+import { AudioBlockModule } from 'src/audio_block/audio_block.module';
+import { AiChatModule } from 'src/ai-chat/ai-chat.module';
+import { AiChat } from 'src/ai-chat/entities/ai-chat.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Dataset, Metadata, Speaker]),
+    TypeOrmModule.forFeature([Dataset, Metadata, Speaker, AiChatHistory, AiModel, AiChat]),
     UserModule,
     CorpusModule,
-    MicrophoneModule
+    MicrophoneModule,
+    LanguageModule,
+    AiChatModule,
+    forwardRef(()=>AudioBlockModule),
+    forwardRef(()=>AiChatModule)
   ],
   controllers: [DatasetController],
   providers: [DatasetService],

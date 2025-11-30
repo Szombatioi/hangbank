@@ -1,23 +1,25 @@
 "use client";
-import { Button } from "@mui/material";
+import HighQualityRecorder from "@/app/components/recorder/high_quality_recorder";
+import { Button, Typography } from "@mui/material";
+import { useState } from "react";
 
 export default function TestTTSPage() {
-  const speak = () => {
-    let utterance = new SpeechSynthesisUtterance();
-    utterance.text = "Hello World!";
-    utterance.lang = "hu-HU";
-    utterance.pitch = 0;
-    // utterance.rate = 4
-    // utterance.volume = 0.4
-
-    let availableVoices = speechSynthesis.getVoices();
-    console.log(availableVoices.find((v) => v.lang === "hu-HU"));
-    // utterance.voice = availableVoices[2];
-
-    console.log(utterance.lang);
-
-    speechSynthesis.speak(utterance);
-  };
-
-  return (<><Button onClick={() => speak()}>Speak</Button></>);
+  const [transcript, setTranscript] = useState<string>("");
+  
+  return (
+    <>
+        {transcript.length > 0 && (<>
+          <Typography variant="h4">
+            {transcript}
+          </Typography>
+        </>)}
+        <HighQualityRecorder 
+          useTranscript={true}
+          language="en-US"
+          onSpacePress={() => {}}
+          onTranscriptUpdate={(text: string) => {setTranscript(text)}}
+          deviceId="06b13ea600dcbe5762bc2d1827cd2b7400d913e1db4616ce161f7d577c40e0be" 
+          sampleRate={48000} />
+    </>
+  );
 }

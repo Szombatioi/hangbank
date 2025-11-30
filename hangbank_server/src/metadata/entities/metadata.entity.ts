@@ -30,6 +30,9 @@ export class Metadata {
   @Column({ nullable: true })
   recording_context: string;
 
+  @Column({nullable: false})
+  language: string;
+
   @CreateDateColumn()
   created_at: Date;
 

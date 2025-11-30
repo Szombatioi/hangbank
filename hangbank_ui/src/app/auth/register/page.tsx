@@ -51,20 +51,21 @@ export default function RegisterPage() {
     }
     console.log("He");
     //API call
-    try{
-        const res = await api.post("/api/auth/register", {username,
-            name,
-            birthdate,
-            gender,
-            email,
-            password,
-        });
-        console.log("Success");
-        showMessage(t("registration_success"), Severity.success);        
-        router.push("/");
-    } catch(err){
-        console.log("Error");
-        showMessage(t("user_aready_exists"), Severity.error);
+    try {
+      const res = await api.post("/api/auth/register", {
+        username,
+        name,
+        birthdate,
+        gender,
+        email,
+        password,
+      });
+      console.log("Success");
+      showMessage(t("registration_success"), Severity.success);
+      router.push("/");
+    } catch (err) {
+      console.log("Error");
+      showMessage(t("user_aready_exists"), Severity.error);
     }
   };
 
@@ -206,7 +207,7 @@ export default function RegisterPage() {
           {/* Register Button */}
           <Grid
             size={12}
-            sx={{ display: "flex", justifyContent: "center", mt: 2 }}
+            sx={{ display: "flex", justifyContent: "center", mt: 2, mb: 0 }}
           >
             <Button
               variant="contained"
@@ -214,6 +215,14 @@ export default function RegisterPage() {
               onClick={handleRegister}
             >
               {t("register")}
+            </Button>
+          </Grid>
+          <Grid
+            size={12}
+            sx={{ display: "flex", justifyContent: "center", mt: 0 }}
+          >
+            <Button onClick={() => router.push("/auth/login")}>
+              {t("login")}
             </Button>
           </Grid>
         </Grid>

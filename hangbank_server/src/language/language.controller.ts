@@ -19,7 +19,7 @@ export class LanguageController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.languageService.findOne(+id);
+    return this.languageService.findOne(id);
   }
 
   @Patch(':id')

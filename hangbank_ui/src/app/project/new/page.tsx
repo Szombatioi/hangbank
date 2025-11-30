@@ -22,8 +22,8 @@ import CorpusBlockCard, {
 } from "@/app/components/corpus_block_card";
 import api from "@/app/axios";
 import { Severity, useSnackbar } from "@/app/contexts/SnackbarProvider";
-import { useSession } from "next-auth/react";
 import CorpusProjectOverview from "@/app/components/corpus_project_overview";
+import ConvoProjectOverview from "@/app/components/convo_project_overview";
 
 //TODO: add values to Textfields
 
@@ -37,6 +37,34 @@ interface CorpusResultType {
   samplingFrequency: number;
 }
 
+export enum RecordingMode{
+  Corpus = 1,
+  Conversation = 2
+}
+
+export interface ConvoResultType {
+  title: string;
+  aiModel: {
+    name: string;
+    model: string;
+  };
+  language: {
+    code: string;
+    name: string;
+  };
+  speaker:{
+    id: number;
+    name: string;
+  };
+  microphone: {
+    deviceId: string;
+    label: string;
+  };
+  samplingFrequency: number;
+  speechDialect?: string;
+  context?: string;
+}
+
 export interface CorpusBlockType {
   id?: string; //not needed everywhere
   sequence: number;
@@ -45,7 +73,6 @@ export interface CorpusBlockType {
 }
 
 export default function NewProjectPage() {
-  const {data: session} = useSession();
   
   const contentIdentifiers = ["types", "config", "overview"];
   const [active, setActive] = useState<"types" | "config" | "overview">(
@@ -54,8 +81,22 @@ export default function NewProjectPage() {
   const [selectedMode, setSelectedMode] = useState<"corpus" | "convo" | null>(
     null
   );
+
+  const [convoResult, setConvoResult] = useState<ConvoResultType | null>(
+    null
+  );
   
   const { showMessage } = useSnackbar();
+
+  const convoBasedFinished = async (val: ConvoResultType) => {
+    if (!val) {
+      showMessage(t("internal_error"), Severity.error);
+      return;
+    }
+    setConvoResult(val);
+
+    setActive("overview");
+  };
 
   const corpusBasedFinished = async (val: CorpusResultType) => {
     
@@ -171,18 +212,16 @@ export default function NewProjectPage() {
               </>
             ) : (
               <>
-                <ConvoBasedFragment invokeNextStep={function (val: {}): void {
-                    throw new Error("Function not implemented.");
-                  } } />
+                <ConvoBasedFragment invokeNextStep={(val) => {
+                  convoBasedFinished(val)
+                }} />
               </>
             )}
           </motion.div>
         )}
         {active === "overview" && (
           <>
-            {corpusResult ? (
-              <>
-                <motion.div
+          <motion.div
                   key="comp3"
                   initial={{ opacity: 0, y: 50 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -190,6 +229,8 @@ export default function NewProjectPage() {
                   transition={{ duration: 0.5 }}
                   className="absolute"
                 >
+            {corpusResult ? (
+              <>
                   <CorpusProjectOverview 
                     projectTitle={corpusResult.projectTitle}
                     speakers={[corpusResult.speaker]}
@@ -199,11 +240,36 @@ export default function NewProjectPage() {
                     corpusBlocks={corpusBlocks} 
                     samplingFrequency={corpusResult.samplingFrequency}
                   />
-                </motion.div>
+                
               </>
             ) : (
-              <>{/* TODO: Convo based results */}</>
+              <>
+                {convoResult ? (
+                  <>
+                  {/* Convo based results */}
+                <ConvoProjectOverview 
+                  title={convoResult!.title} 
+                  aiModel={{
+                    name: convoResult.aiModel.name,
+                    model: convoResult.aiModel.model,
+                  }} language={{
+                    code: convoResult.language.code,
+                    name: convoResult.language.name,
+                  }} 
+                  speaker={convoResult.speaker} 
+                  microphone={{
+                    deviceId: convoResult.microphone.deviceId,
+                    label: convoResult.microphone.label,
+                  }}
+                  samplingFrequency={convoResult.samplingFrequency} />
+                  </>
+                ) : (
+                  <>
+                  </>
+              )}
+              </>
             )}
+            </motion.div>
           </>
         )}
       </AnimatePresence>

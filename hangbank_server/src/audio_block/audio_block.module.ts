@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { AudioBlockService } from './audio_block.service';
 import { AudioBlockController } from './audio_block.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -7,16 +7,22 @@ import { DatasetModule } from 'src/dataset/dataset.module';
 import { SpeakerModule } from 'src/speaker/speaker.module';
 import { MinioModule } from 'src/minio/minio.module';
 import { CorpusBlockModule } from 'src/corpus_block/corpus_block.module';
+import { AiModel } from 'src/ai_model/entities/ai_model.entity';
+import { AiChatHistory } from 'src/ai_chat_history/entities/ai_chat_history.entity';
+import { AiChatModule } from 'src/ai-chat/ai-chat.module';
+import { Dataset } from 'src/dataset/entities/dataset.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([AudioBlock]),
-    DatasetModule,
+    TypeOrmModule.forFeature([AudioBlock, AiModel, AiChatHistory, Dataset]),
+    forwardRef(()=>DatasetModule),
     SpeakerModule,
     MinioModule,
-    CorpusBlockModule
+    CorpusBlockModule,
+    AiChatModule
   ],
   controllers: [AudioBlockController],
   providers: [AudioBlockService],
+  exports: [AudioBlockService]
 })
 export class AudioBlockModule {}

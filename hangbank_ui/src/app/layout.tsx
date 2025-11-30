@@ -4,13 +4,19 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { Button, CircularProgress, CssBaseline } from "@mui/material";
-import { LanguageProvider } from "./contexts/LanguageContext";
-import { SnackbarProvider } from "./contexts/SnackbarProvider";
-import { SessionProvider, useSession } from "next-auth/react";
+import { LanguageProvider, useLanguage } from "./contexts/LanguageContext";
+import {
+  Severity,
+  SnackbarProvider,
+  useSnackbar,
+} from "./contexts/SnackbarProvider";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect } from "react";
 import { signOut } from "next-auth/react";
 import Navbar from "./components/navbar";
+import api, { getUserByToken, UserHeaderType } from "./axios";
+import { useTranslation } from "react-i18next";
+import { AuthProvider } from "./contexts/AuthContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -55,14 +61,17 @@ export default function RootLayout({
         style={{}}
       >
         <ThemeProvider theme={theme}>
-          <SessionProvider>
-            <AuthGuard>
-              <CssBaseline />
-              <LanguageProvider>
-                <SnackbarProvider>{children}</SnackbarProvider>
-              </LanguageProvider>
-            </AuthGuard>
-          </SessionProvider>
+          <AuthProvider>
+            {/* <AuthGuard> */}
+            <CssBaseline />
+            <LanguageProvider>
+              <SnackbarProvider>
+                <Navbar />
+                {children}
+              </SnackbarProvider>
+            </LanguageProvider>
+            {/* </AuthGuard> */}
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
@@ -70,34 +79,37 @@ export default function RootLayout({
 }
 
 function AuthGuard({ children }: { children: ReactNode }) {
-  const { data: session, status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
+  const { setLanguage } = useLanguage();
+  const { showMessage } = useSnackbar();
+  const { t } = useTranslation("common");
 
   useEffect(() => {
-    const isAuthPage = pathname.startsWith("/auth");
-    if (status === "unauthenticated" && !isAuthPage) {
-      router.push("/auth/login");
+    async function getAuth() {
+      return await getUserByToken();
     }
-  }, [status, router, pathname]);
+    const auth = getAuth();
+    if (!auth && !pathname.startsWith("/auth")) router.push("/auth/login");
 
-  if (status === "loading")
-    return (
-      <div style={{ textAlign: "center" }}>
-        <CircularProgress />
-      </div>
-    );
+    async function fetchUserSettings() {
+      try {
+        const _auth = await getUserByToken();
+        const settings = await api.get<{
+          language: {
+            id: string;
+            code: string;
+            name: string;
+          };
+        }>(`/user-settings/${_auth!.user.id}`);
+        setLanguage(settings.data.language.code.split("-")[0]);
+      } catch (err) {
+        showMessage(t("fetch_settings_fail"), Severity.error);
+      }
+    }
 
-  return (
-    <>
-      {session && (
-        <Navbar
-          signOutCallback={(options) =>
-            signOut({ callbackUrl: "/", ...options })
-          }
-        />
-      )}
-      {children}
-    </>
-  );
+    fetchUserSettings();
+  }, [router, pathname]);
+
+  return <></>;
 }

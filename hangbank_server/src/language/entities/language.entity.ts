@@ -1,10 +1,16 @@
-import { Column, Entity, PrimaryColumn } from "typeorm";
+import { Column, Entity, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class Language {
-    @PrimaryColumn()
+    @PrimaryGeneratedColumn("uuid")
+    id: string;
+    
+    @Column()
     code: string; //e.g. "en-US", "hu-HU"
 
     @Column()
     name: string; //e.g. "English (US)", "Hungarian"
+
+    @Column({default: false})
+    isTranslated: boolean;
 }

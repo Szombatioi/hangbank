@@ -1,30 +1,40 @@
 "use client";
 
-import { Box, Button, Divider, Grid, MenuItem, Paper, Select, TextField, Typography } from "@mui/material";
+import api from "@/app/axios"; // setAuthToken-t kivettük, nem itt használjuk
+import { Severity, useSnackbar } from "@/app/contexts/SnackbarProvider";
+import { useAuth } from "@/app/contexts/AuthContext"; // Importáljuk a hook-ot
+import { Box, Button, Grid, Paper, TextField, Typography } from "@mui/material";
 import { t } from "i18next";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
+  const { showMessage } = useSnackbar();
+  
+  // A Contextből vesszük a login függvényt
+  const { login } = useAuth(); 
   const router = useRouter();
 
   const handleLogin = async () => {
-    const res = await signIn("credentials", {
-      redirect: false,
-      email,
-      password,
-      callbackUrl: "/", // where to go after login
-    });
-    if (res?.error) {
-      // show error
-      console.error(res.error);
-    } else {
-      // manually redirect
-      window.location.href = "/";
+    try {
+      const res = await api.post("/api/auth/login", {
+        email: email,
+        password: password,
+      });
+
+      // ITT A VÁLTOZÁS:
+      // Nem mi állítjuk be a tokent és a routert, hanem átadjuk a contextnek.
+      // Ez biztosítja, hogy a User state frissüljön, mielőtt az oldal vált.
+      await login(res.data.access_token);
+      
+      showMessage(t("successful_login"), Severity.success);
+      // A router.replace("/") már a context-ben történik
+      
+    } catch (err) {
+      console.error(err);
+      showMessage(t("invalid_credentials"), Severity.error);
     }
   };
 
@@ -77,6 +87,7 @@ export default function LoginPage() {
               variant="outlined"
               label={t("email")}
               type="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />

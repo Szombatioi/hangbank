@@ -15,7 +15,7 @@ export class AudioBlockController {
         fileSize: 50 * 1024 * 1024, //Max 50Mb
     },
 }))
-  create(@Body() createAudioBlockDto: CreateAudioBlockDto, @UploadedFile() audioBlob: Express.Multer.File) {
+  create(@Body() createAudioBlockDto: CreateAudioBlockDto, @UploadedFile() audioBlob: Express.Multer.File | null) {
     return this.audioBlockService.create(createAudioBlockDto, audioBlob);
   }
 
@@ -34,8 +34,8 @@ export class AudioBlockController {
     return this.audioBlockService.update(+id, updateAudioBlockDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.audioBlockService.remove(+id);
-  }
+  // @Delete(':id')
+  // remove(@Param('id') id: string) {
+  //   return this.audioBlockService.remove(+id);
+  // }
 }

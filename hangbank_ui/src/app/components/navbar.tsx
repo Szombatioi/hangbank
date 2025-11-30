@@ -1,3 +1,4 @@
+import { AccountCircle, Dataset, Title } from "@mui/icons-material";
 import {
   AppBar,
   Avatar,
@@ -17,6 +18,9 @@ import { signOut, SignOutParams } from "next-auth/react";
 import { pages } from "next/dist/build/templates/app-page";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { setAuthToken } from "../axios";
 
 interface PageType {
   name: string;
@@ -24,19 +28,17 @@ interface PageType {
 }
 
 interface NavbarProps {
-  signOutCallback: (
-    options?: SignOutParams<true> | undefined
-  ) => Promise<undefined>;
 }
 
-export default function Navbar({ signOutCallback }: NavbarProps) {
+export default function Navbar({  }: NavbarProps) {
   {
     const router = useRouter();
-    const pages: PageType[] = [
-      { name: "Home", onClick: () => router.push("/") },
-      { name: "Sign Out", onClick: () => signOutCallback() },
-    ];
+    const [pages, setPages] = useState<PageType[]>([]);
+    const {t} = useTranslation("common");
 
+    useEffect(() => {
+      setPages([{ name: t("home"), onClick: () => router.push("/") }]);
+    }, [t]);
     return (
       <AppBar
         sx={{
@@ -53,6 +55,7 @@ export default function Navbar({ signOutCallback }: NavbarProps) {
             alt="Hangbank Logo"
             width={40}
             height={40}
+            onClick={() => router.push("/")}
           />
             <Typography
               variant="h6"
@@ -72,60 +75,6 @@ export default function Navbar({ signOutCallback }: NavbarProps) {
               HANGBANK
             </Typography>
 
-            {/* <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
-              <IconButton
-                size="large"
-                aria-label="account of current user"
-                aria-controls="menu-appbar"
-                aria-haspopup="true"
-                onClick={handleOpenNavMenu}
-                color="inherit"
-              >
-                <MenuIcon />
-              </IconButton>
-              <Menu
-                id="menu-appbar"
-                anchorEl={anchorElNav}
-                anchorOrigin={{
-                  vertical: 'bottom',
-                  horizontal: 'left',
-                }}
-                keepMounted
-                transformOrigin={{
-                  vertical: 'top',
-                  horizontal: 'left',
-                }}
-                open={Boolean(anchorElNav)}
-                onClose={handleCloseNavMenu}
-                sx={{ display: { xs: 'block', md: 'none' } }}
-              >
-                {pages.map((page) => (
-                  <MenuItem key={page} onClick={handleCloseNavMenu}>
-                    <Typography sx={{ textAlign: 'center' }}>{page}</Typography>
-                  </MenuItem>
-                ))}
-              </Menu>
-            </Box> */}
-
-            {/* <Typography
-              variant="h5"
-              noWrap
-              component="a"
-              href="#app-bar-with-responsive-menu"
-              sx={{
-                mr: 2,
-                display: { xs: 'flex', md: 'none' },
-                flexGrow: 1,
-                fontFamily: 'monospace',
-                fontWeight: 700,
-                letterSpacing: '.3rem',
-                color: 'inherit',
-                textDecoration: 'none',
-              }}
-            >
-              HANGBANK
-            </Typography> */}
-
             {/* Pages */}
             <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
               {pages.map((page, i) => (
@@ -138,6 +87,26 @@ export default function Navbar({ signOutCallback }: NavbarProps) {
                 </Button>
               ))}
             </Box>
+            
+            <Tooltip title={t("my_datasets")}>
+            <IconButton onClick={()=>{router.push("/my_datasets")}}>
+              <Dataset />
+            </IconButton>
+            </Tooltip>
+            <Tooltip title={t("account")}>
+            <IconButton onClick={()=>{router.push("/account")}}>
+              <AccountCircle />
+            </IconButton>
+            </Tooltip>
+            <Button
+                  onClick={() => {
+                    setAuthToken(null);
+                    router.push("/auth/login");
+                  }} 
+                  sx={{ my: 2, color: "inherit", display: "block" }}
+                >
+                  {t("signout")}
+                </Button>
             <Box sx={{ flexGrow: 0 }}></Box>
           </Toolbar>
         </Container>

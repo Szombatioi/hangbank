@@ -4,20 +4,37 @@ import { UserService } from './user/user.service';
 import * as bcrypt from 'bcrypt';
 import { UserResult } from './user/entities/userResult.dto';
 import { CreateUserDto } from './user/entities/createUser.dto';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AppService {
-  constructor(@Inject() private readonly usersService: UserService){}
+  constructor(
+    @Inject() private readonly usersService: UserService,
+    private jwtService: JwtService
+  ){}
 
   async validateUser(email: string, password: string): Promise<UserResult | null>{
+    
     const user = await this.usersService.findOneByEmail(email);
-    console.log("User:"+user);
-    console.log(user)
+    console.log("User: ",user);
+    console.log("Login password: ", password)
+    console.log("Hash: ", await bcrypt.hash(password, 10))
     if (user && (await bcrypt.compare(password, user.password))) {
       const { password, ...result } = user;
       return result;
     }
     return null;
+  }
+
+  async generateToken(user: UserResult) {
+    const payload = {
+      sub: user.id,
+      email: user.email
+    };
+
+    return {
+      access_token: this.jwtService.sign(payload),
+    };
   }
 
 

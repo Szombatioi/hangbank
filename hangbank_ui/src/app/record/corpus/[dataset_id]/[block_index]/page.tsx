@@ -2,8 +2,9 @@
 
 import api from "@/app/axios";
 import { CorpusBlockStatus } from "@/app/components/corpus_block_card";
+import HighQualityRecorder from "@/app/components/recorder/high_quality_recorder";
 import { Severity, useSnackbar } from "@/app/contexts/SnackbarProvider";
-import { DatasetType } from "@/app/my_datasets/overview/[id]/page";
+import { DatasetCorpusType } from "@/app/my_datasets/overview/[id]/[type]/page";
 import { CorpusBlockType } from "@/app/project/new/page";
 import Recorder from "@/app/record/recorder copy";
 import {
@@ -31,7 +32,7 @@ import {
   Typography,
 } from "@mui/material";
 import { t } from "i18next";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import WaveSurfer from "wavesurfer.js";
 
@@ -59,6 +60,7 @@ export default function RecordPage() {
   }>();
   const block_index = parseInt(params.block_index, 10);
   const { showMessage } = useSnackbar();
+  const router = useRouter();
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -74,31 +76,32 @@ export default function RecordPage() {
     };
   }, []);
 
-  const [dataset, setDataset] = useState<DatasetType | null>(null);
+  const [dataset, setDataset] = useState<DatasetCorpusType | null>(null);
   const [blocks, setBlocks] = useState<CorpusBlockWithText[] | null>(null);
   const saveableAudioBlocksRef = useRef<SaveableAudioBlock[]>([]);
 
-
   //Save audioBlocks that were recorded
   const saveProgress = async () => {
-    //TODO: implement
+    console.log("Save progress: ", saveableAudioBlocksRef.current);
     //corpusBlockId, datasetId, speakerId, and the Blob as File form
-    console.log("Saving progress...")
     if (!datasetRef || !datasetRef.current) {
-      console.log("Could not save progress")
+      console.log("Could not save progress");
       showMessage(t("could_not_save_progress"), Severity.error);
       return;
     }
 
     const tasks = [];
     const errors: string[] = [];
-    console.log(saveableAudioBlocksRef.current)
+    console.log(saveableAudioBlocksRef.current);
     saveableAudioBlocksRef.current.forEach((a) => {
-      console.log("Blob ", a.corpusBlockId)
+      console.log("Blob ", a.corpusBlockId);
       const formData = new FormData();
-      formData.append("file", a.blob);
+      formData.append("file", a.blob); //Blob is a .wav blob
       formData.append("datasetId", datasetRef!.current!.id);
-      formData.append("speakerId", datasetRef.current!.speakers[0].id.toString());//datasetRef!.current!.speakers[0].id);
+      formData.append(
+        "speakerId",
+        datasetRef.current!.speakers[0].id.toString()
+      ); //datasetRef!.current!.speakers[0].id);
       formData.append("corpusBlockId", a.corpusBlockId);
       const task = api
         .post("/audio-block", formData, {
@@ -113,9 +116,13 @@ export default function RecordPage() {
       tasks.push(task);
     });
 
-    console.log("Any errors?")
-    if(errors.length > 0){
+    console.log("Any errors?");
+    if (errors.length > 0) {
       showMessage(`${t("errors_occured")}: ${errors.join("\n")}`);
+    }
+    else{
+      showMessage(t("save_success"), Severity.success);
+      router.push("/my_datasets");
     }
   };
 
@@ -137,18 +144,31 @@ export default function RecordPage() {
     setRecordedAudioBlob(blob);
   };
 
+  //When you press space -> add to list and go to next block (handle it in onSpace method)
+  //When you stop the recording -> get the last blob
+  const addAudioBlobToList = (blob: Blob) => {
+    saveableAudioBlocksRef.current.push({
+      blob: blob,
+      corpusBlockId:
+        blocksRef.current![currentBlockIndexRef.current].corpusBlock.id,
+    });
+
+    console.log(saveableAudioBlocksRef.current);
+  };
+
   const setup = async () => {
     //Get dataset
-    const dataset = await api.get<DatasetType>(`/dataset/${params.dataset_id}`);
+    const dataset = await api.get<DatasetCorpusType>(`/dataset/${params.dataset_id}`);
     setDataset(dataset.data);
-
+    console.log("currentBlockIndex: ", currentBlockIndex);
     //Get [n-2, n+3] blocks
-    const fromIndex =
-      currentBlockIndex - 2 < currentBlockIndex ? 0 : currentBlockIndex - 2;
+    const fromIndex = currentBlockIndex - 2 < 0 ? 0 : currentBlockIndex - 2;
+
     const toIndex =
       currentBlockIndex + 3 > dataset.data.corpusBlocks.length - 1
         ? dataset.data.corpusBlocks.length - 1
         : currentBlockIndex + 3;
+    console.log("fromIndex ", fromIndex);
     const blocks = await api.get<CorpusBlockWithText[]>(
       `/minio/blocks/${dataset.data.corpus.id}/${fromIndex}/${toIndex}`
     );
@@ -184,7 +204,7 @@ export default function RecordPage() {
     setFollowingBlockTexts(array2);
   };
 
-  const datasetRef = useRef<DatasetType | null>(null);
+  const datasetRef = useRef<DatasetCorpusType | null>(null);
   const blocksRef = useRef<CorpusBlockWithText[] | null>(null);
   const currentBlockIndexRef = useRef<number>(block_index);
   useEffect(() => {
@@ -207,20 +227,68 @@ export default function RecordPage() {
         blocksRef.current![currentBlockIndexRef.current].corpusBlock.id,
     });
 
-    console.log("saveableAudioBlocksRef.current: ", saveableAudioBlocksRef.current);
+    console.log(
+      "saveableAudioBlocksRef.current: ",
+      saveableAudioBlocksRef.current
+    );
   };
 
-  const nextBlock = async (blob: Blob) => {
-    getAudioBlob(blob);
+  const prevBlock = async () => {
+    const dataset = datasetRef.current;
+    const blocks = blocksRef.current;
+    let currentIndex = currentBlockIndexRef.current;
+
+    if (!dataset || !blocks) {
+      return;
+    }
+    if (currentIndex - 1 < 0) {
+      return;
+    }
+
+    // console.log("CurrentIndex: ", currentIndex);
+    var newIndex = currentIndex - 1;
+    currentBlockIndexRef.current = newIndex;
+    setCurrentBlockIndex(newIndex);
+    // console.log("NewIndex before if: ", newIndex);
+    //Fetch new blocks
+    if (newIndex <= 0 && blocks[0].corpusBlock.sequence !== 1) {
+      const fromNewIndex = Math.max(blocks[0].corpusBlock.sequence - 4, 0);
+      const toNewIndex = blocks[0].corpusBlock.sequence - 2;
+      try {
+        const res = await api.get<CorpusBlockWithText[]>(
+          `/minio/blocks/${dataset.corpus.id}/${fromNewIndex}/${toNewIndex}`
+        );
+        // console.log(blocks);
+        newIndex = blocks[0].corpusBlock.sequence - 1;
+        currentBlockIndexRef.current = newIndex;
+        setCurrentBlockIndex(newIndex);
+        // console.log(newIndex);
+        const newBlocks = [...res.data, ...blocks];
+        blocksRef.current = newBlocks;
+        // console.log(newBlocks);
+        setBlocks(newBlocks);
+
+        // Update previous/following arrays
+        setPrevFollowingBlocks(newIndex, newBlocks);
+      } catch (error) {
+        console.error("Failed to fetch more blocks:", error);
+      }
+    } else {
+      setPrevFollowingBlocks(newIndex, blocks);
+    }
+  };
+
+  const nextBlock = async () => {
+    // getAudioBlob(blob);
 
     const dataset = datasetRef.current;
     const blocks = blocksRef.current;
     let currentIndex = currentBlockIndexRef.current;
 
     if (!dataset || !blocks) {
-      console.log("!dataset || !blocks");
-      console.log("Dataset: ", dataset);
-      console.log("Blocks: ", blocks);
+      // console.log("!dataset || !blocks");
+      // console.log("Dataset: ", dataset);
+      // console.log("Blocks: ", blocks);
       return;
     }
     if (currentIndex + 1 >= dataset!.corpusBlocks!.length) {
@@ -291,12 +359,34 @@ export default function RecordPage() {
           </div>
 
           {/* Part 1: Corpus block viewer */}
-          <div style={{ marginTop: 8, marginBottom: 8, width: "100%" }}>
+          <div
+            style={{
+              marginTop: 8,
+              marginBottom: 8,
+              width: "100%",
+              display: "flex",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Tooltip title={t("prev_block")}>
+                <IconButton onClick={prevBlock}>
+                  <Undo />
+                </IconButton>
+              </Tooltip>
+            </div>
+
+            {/* Corpus viewer paper */}
             <Box
               sx={{
                 justifySelf: "center",
                 // border: "1px solid red",
-                width: "100%",
+                flexGrow: 1,
                 minHeight: 256,
                 maxHeight: 512,
                 display: "flex",
@@ -366,21 +456,49 @@ export default function RecordPage() {
                 </Typography>
               </Paper>
             </Box>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Tooltip title={t("next_block")}>
+                <IconButton onClick={nextBlock}>
+                  <Redo />
+                </IconButton>
+              </Tooltip>
+            </div>
           </div>
 
           {/* Part 2: Waveform of audio */}
           {/* TODO: set freq based on corpus setting (not save_freq_ms, this is just my preference) */}
           {dataset && (
-            <Recorder
-              selectedDeviceId={dataset.speakers[0].mic.deviceId}
-              save_freq_ms={250}
-              useTranscript={true}
-              onAudioUpdate={handleAudioUrlUpdate}
-              onRecordingStop={handleAudioBlobUpdate}
-              onSpacePress={nextBlock}
-              language={dataset.corpus.language}
+            <HighQualityRecorder
               sampleRate={dataset.speakers[0].samplingFrequency}
+              deviceId={dataset.speakers[0].mic.deviceId}
+              useTranscript={true}
+              onSpacePress={(blob: Blob) => {
+                addAudioBlobToList(blob);
+                nextBlock();
+              }}
+              onTranscriptUpdate={() => {}}
+              onRecorderStop={(blob: Blob) => {
+                addAudioBlobToList(blob);
+              }}
+              language={dataset.corpus.language}
             />
+            // <Recorder
+            //   selectedDeviceId={dataset.speakers[0].mic.deviceId}
+            //   save_freq_ms={250}
+            //   useTranscript={true}
+            //   onAudioUpdate={handleAudioUrlUpdate}
+            //   onRecordingStop={handleAudioBlobUpdate}
+            //   onSpacePress={nextBlock}
+            //   language={dataset.corpus.language}
+            //   sampleRate={dataset.speakers[0].samplingFrequency}
+            // />
           )}
 
           {/* Part 3: Buttons */}
