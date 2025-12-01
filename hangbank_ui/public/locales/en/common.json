@@ -100,5 +100,8 @@
     "cancel": "Cancel",
     "delete_success": "Delete was successful",
     "delete_fail": "Fail during deletion!",
-    "selected_topic": "Selected topic"
+    "selected_topic": "Selected topic",
+    "download": "Download",
+    "download_fail": "Download has failed",
+    "download_success": "Download was successful"
 }

@@ -1,9 +1,14 @@
+import archiver from 'archiver';
+import { PassThrough, Readable } from 'stream';
+import { v4 as uuid } from 'uuid';
+
 import {
   BadRequestException,
   Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  StreamableFile,
   UnauthorizedException,
 } from '@nestjs/common';
 import { CreateDatasetDto } from './dto/create-dataset.dto';
@@ -31,6 +36,7 @@ import { UserAuthDto } from 'src/user/dto/user-auth-dto';
 import { AudioBlockService } from 'src/audio_block/audio_block.service';
 import { AiChatService } from 'src/ai-chat/ai-chat.service';
 import { AiChat } from 'src/ai-chat/entities/ai-chat.entity';
+import { MinioService } from 'src/minio/minio.service';
 
 @Injectable()
 export class DatasetService {
@@ -53,6 +59,8 @@ export class DatasetService {
     // @Inject() private readonly aiChatService: AiChatService,
     @InjectRepository(AiChat)
     private readonly aiChatRepository: Repository<AiChat>,
+    @Inject()
+    private readonly minioService: MinioService,
   ) {}
 
   //Creates a new project with these details:
@@ -138,8 +146,9 @@ export class DatasetService {
       return dataset;
     } else {
       //CONVO ------------------------------------------------------------
-      
-      if(!aiModel_id) throw new BadRequestException("Ai model ID is not provided!")
+
+      if (!aiModel_id)
+        throw new BadRequestException('Ai model ID is not provided!');
       const dataset = this.datasetRepository.create({
         name: projectName,
         mode: mode,
@@ -181,8 +190,14 @@ export class DatasetService {
         }),
       );
 
-      const aiModel = await this.aiModelRepository.findOne({where: {name: aiModel_id}});
-      if(!aiModel) throw new NotFoundException("AiModel not found with name: ", aiModel_id);
+      const aiModel = await this.aiModelRepository.findOne({
+        where: { name: aiModel_id },
+      });
+      if (!aiModel)
+        throw new NotFoundException(
+          'AiModel not found with name: ',
+          aiModel_id,
+        );
 
       await this.datasetRepository.save(dataset);
       // dataset.aiChat = await this.aiChatService.create({datasetId: dataset.id, aiModelId: aiModel_id});
@@ -192,8 +207,8 @@ export class DatasetService {
           aiModel: aiModel,
           aiChatHistory: [],
           dataset: dataset,
-        })
-      )
+        }),
+      );
 
       return dataset;
     }
@@ -248,7 +263,7 @@ export class DatasetService {
         metadata: { speakers: { user: true, microphone: true } },
         aiChat: {
           aiModel: true,
-          aiChatHistory: true
+          aiChatHistory: true,
         },
       },
     });
@@ -290,8 +305,8 @@ export class DatasetService {
           aiChatHistory: dataset.aiChat?.aiChatHistory.map((ch) => ({
             id: ch.id,
             aiSent: ch.aiSent,
-            history: ch.history
-          }))
+            history: ch.history,
+          })),
         },
         corpusBlocks:
           dataset.corpus &&
@@ -311,7 +326,9 @@ export class DatasetService {
                 filename: cb.filename,
                 status:
                   audioBlock != null
-                    ? cb.status === CorpusBlockStatus.warning ? CorpusBlockStatus.warning : CorpusBlockStatus.done
+                    ? cb.status === CorpusBlockStatus.warning
+                      ? CorpusBlockStatus.warning
+                      : CorpusBlockStatus.done
                     : CorpusBlockStatus.todo,
               };
             }),
@@ -329,8 +346,8 @@ export class DatasetService {
           new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
       );
 
-      console.log("Dataset aichat: ", dataset.aiChat)
-      console.log("ChatHistory: ", chatHistory)
+      console.log('Dataset aichat: ', dataset.aiChat);
+      console.log('ChatHistory: ', chatHistory);
 
       return {
         id: dataset.id,
@@ -364,7 +381,7 @@ export class DatasetService {
             name: dataset.aiChat?.aiModel.name,
           },
           topic: dataset.aiChat?.topic,
-          id: dataset.aiChat?.id
+          id: dataset.aiChat?.id,
         },
 
         language: {
@@ -383,11 +400,11 @@ export class DatasetService {
     });
     if (!dataset)
       throw new NotFoundException('Dataset not found with ID: ', id);
-    
-    if(dataset.mode === RecordingMode.Conversation){
-      console.log("Mode is CONVO")
+
+    if (dataset.mode === RecordingMode.Conversation) {
+      console.log('Mode is CONVO');
       if (selectedTopic) {
-        console.log("Topic is selected")
+        console.log('Topic is selected');
         dataset.aiChat!.topic = selectedTopic; //In this case, aiChat MUST be present
       }
     }
@@ -396,20 +413,29 @@ export class DatasetService {
   }
 
   async remove(auth: UserAuthDto, id: string) {
-    const {userId} = auth;
+    const { userId } = auth;
     const user = await this.userService.findOneById(userId);
-    const dataset = await this.datasetRepository.findOne({where: {id}, relations: {creator: true, audioBlocks: true, aiChat: true}});
-    if(!dataset) throw new NotFoundException("Dataset not found with ID: ", id);
-    if(dataset.creator.id !== user.id) throw new UnauthorizedException("You have no right to delete this dataset!");
+    const dataset = await this.datasetRepository.findOne({
+      where: { id },
+      relations: { creator: true, audioBlocks: true, aiChat: true },
+    });
+    if (!dataset)
+      throw new NotFoundException('Dataset not found with ID: ', id);
+    if (dataset.creator.id !== user.id)
+      throw new UnauthorizedException(
+        'You have no right to delete this dataset!',
+      );
 
     //Remove: Dataset + AudioBlocks + ChatHistory if exists
     await dataset.audioBlocks.forEach(
-      async a => await this.audioBlockService.remove(a.id),
+      async (a) => await this.audioBlockService.remove(a.id),
     );
-    if(dataset.mode === RecordingMode.Conversation){
-      const chatHistory = await this.aiChatHistoryRepository.find({where: {aiChat: {id: dataset.aiChat!.id}}});
-      console.log("ChatHistory: ", chatHistory);
-      chatHistory.forEach(async ch => {
+    if (dataset.mode === RecordingMode.Conversation) {
+      const chatHistory = await this.aiChatHistoryRepository.find({
+        where: { aiChat: { id: dataset.aiChat!.id } },
+      });
+      console.log('ChatHistory: ', chatHistory);
+      chatHistory.forEach(async (ch) => {
         await this.aiChatHistoryRepository.delete(ch);
       });
     }
@@ -432,4 +458,104 @@ export class DatasetService {
 
     return age;
   }
+
+  async downloadDataset(userAuth: UserAuthDto, datasetId: string) {
+    const { userId } = userAuth;
+    const user = await this.userService.findOneById(userId); //We need to find the user, because what if they do not exist?
+    const dataset = await this.datasetRepository.findOne({
+      where: { id: datasetId },
+      relations: { creator: true, audioBlocks: { corpusBlock: true }, aiChat: {aiChatHistory: true} },
+    });
+    if (!dataset)
+      throw new NotFoundException('Dataset not found with ID: ', datasetId);
+
+    if (dataset.creator.id !== user.id)
+      throw new UnauthorizedException(
+        'You have no right to download this dataset!',
+      );
+
+    //ZIP
+    const archiveStream = new PassThrough();
+    const archive = archiver('zip', { zlib: { level: 9 } });
+    archive.pipe(archiveStream);
+
+    const metadataLines: string[] = [];
+
+    let fileIndex = 1;
+
+      for (const ab of dataset.audioBlocks) {
+        const audioLink = ab.audio_minio_link.split("/");
+        const audioObjName = audioLink[audioLink.length - 1];
+        
+
+        //Download from MinIO
+        const audio = await this.minioService.downloadObject(
+          audioObjName,
+          'audio',
+        ); //This is a .wav file
+
+        const audioBuffer = await streamToBuffer(audio);
+
+
+        //Add to zip
+        const filename = fileIndex.toString().padStart(4, '0'); // 0001.wav
+        archive.append(audioBuffer, { name: `dataset/audio/${filename}.wav` });
+
+        fileIndex++;
+      };
+
+    if (dataset.mode === RecordingMode.Corpus) {
+      fileIndex = 1;
+      for(const ab of dataset.audioBlocks){
+        const cblockLink = ab.corpusBlock.corpus_block_minio_link.split("/");
+        const cblockObjName = cblockLink[cblockLink.length - 1];
+
+        const text = await this.minioService.downloadObject(
+          cblockObjName,
+          'corpus-blocks',
+        ); //This is a .txt file
+
+        const transcript = (await streamToString(text)).trim();
+
+        //Add to metadata.cs
+        const filename = fileIndex.toString().padStart(4, '0'); // 0001.wav
+        metadataLines.push(`audio/${filename}.wav|${transcript}`);
+
+        fileIndex++;
+      }
+    } else { //Convo
+      fileIndex = 1;
+      for(const ch of dataset.aiChat!.aiChatHistory){
+        if(ch.aiSent) continue;
+        const transcript = ch.history.trim();
+
+        //Add to metadata.cs
+        const filename = fileIndex.toString().padStart(4, '0'); // 0001.wav
+        metadataLines.push(`audio/${filename}.wav|${transcript}`);
+
+        fileIndex++;
+      }
+    }
+
+    //Add metadata to the ZIP
+    archive.append(metadataLines.join("\n"), { name: "dataset/metadata.csv" });
+    await archive.finalize();
+    return new StreamableFile(archiveStream, {
+      disposition: `attachment; filename="${dataset.name}.zip"`
+    });
+  }
+}
+
+async function streamToBuffer(stream: Readable): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const chunks: Uint8Array[] = [];
+    stream.on("data", (chunk) => chunks.push(chunk));
+    stream.on("end", () => resolve(Buffer.concat(chunks)));
+    stream.on("error", reject);
+  });
+}
+
+async function streamToString(stream: Readable): Promise<string> {
+  const buffer = await streamToBuffer(stream);
+  return buffer.toString("utf8");
 }
