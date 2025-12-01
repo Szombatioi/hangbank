@@ -1,6 +1,7 @@
 import {
   AutoStories,
   Delete,
+  Download,
   OpenInNew,
   SmartToy,
 } from "@mui/icons-material";
@@ -44,120 +45,160 @@ export default function DatasetCard({
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
   const deleteDataset = async () => {
-    try{
+    try {
       const res = await api.delete(`/dataset/${id}`);
       showMessage(t("delete_success", Severity.info));
       window.location.reload();
-    } catch(err){
+    } catch (err) {
       showMessage(t("delete_fail", Severity.error));
+    }
+  };
+
+  const downloadDataset = async () => {
+    try {
+      const res = await api.get(`/dataset/download/${id}`, {
+        responseType: "blob"
+      });
+      const blob = res.data;
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${title}.dataset.zip`
+      document.body.appendChild(link);
+      
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      showMessage("download_success", Severity.info);
+    } catch (err) {
+      showMessage("download_fail", Severity.error);
+      console.error(err);
     }
   };
 
   return (
     <>
       <Paper
-      elevation={3}
-      sx={{
-        padding: 2,
-        width: "23vw",
-        height: "21vh",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      {/* === TOP ROW === */}
-      <Box
+        elevation={3}
         sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Typography variant="h6">{title}</Typography>
-
-        {type === ProjectType.Corpus ? <AutoStories /> : <SmartToy />}
-      </Box>
-
-      {/* === MIDDLE EXPANDING SECTION === */}
-      <Box
-        sx={{
-          flexGrow: 1,     // <-- THIS makes the middle expand
+          padding: 2,
+          width: "23vw",
+          height: "21vh",
           display: "flex",
           flexDirection: "column",
-          justifyContent: "center",  // Center contents vertically inside the free space
-          gap: 0.5,
         }}
       >
-        {corpusName && (
-          <Typography variant="h6">Corpus: {corpusName}</Typography>
-        )}
+        {/* === TOP ROW === */}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Typography variant="h6">{title}</Typography>
 
-        {actualBlocks != null && totalBlocks != null && (
-          <Typography variant="body1">
-            {actualBlocks}/{totalBlocks}
-          </Typography>
-        )}
+          {type === ProjectType.Corpus ? <AutoStories /> : <SmartToy />}
+        </Box>
 
-        
-      </Box>
+        {/* === MIDDLE EXPANDING SECTION === */}
+        <Box
+          sx={{
+            flexGrow: 1, // <-- THIS makes the middle expand
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center", // Center contents vertically inside the free space
+            gap: 0.5,
+          }}
+        >
+          {corpusName && (
+            <Typography variant="h6">Corpus: {corpusName}</Typography>
+          )}
 
-      {/* === BOTTOM ROW === */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
+          {actualBlocks != null && totalBlocks != null && (
+            <Typography variant="body1">
+              {actualBlocks}/{totalBlocks}
+            </Typography>
+          )}
+        </Box>
+
+        {/* === BOTTOM ROW === */}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <div>
+            <Typography variant="body1">{language}</Typography>
+            <Typography variant="body1">
+              {t("speaker")}: {speakerName}
+            </Typography>
+          </div>
+
+          <div
+            style={{
+              alignSelf: "end",
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 3,
+            }}
+          >
+            <Tooltip title={t("download")}>
+              <IconButton
+                onClick={() => downloadDataset()}
+                size="large"
+                color="primary"
+                sx={{ padding: 0, margin: 0, alignSelf: "end" }}
+              >
+                <Download />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title={t("delete")}>
+              <IconButton
+                onClick={() => setConfirmDialogOpen(true)}
+                size="large"
+                color="primary"
+                sx={{ padding: 0, margin: 0, alignSelf: "end" }}
+              >
+                <Delete />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title={t("open")}>
+              <IconButton
+                onClick={() =>
+                  router.push(
+                    `/my_datasets/overview/${id}/${
+                      type === ProjectType.Corpus ? "corpus" : "convo"
+                    }`
+                  )
+                }
+                size="large"
+                color="primary"
+                sx={{ padding: 0, margin: 0, alignSelf: "end" }}
+              >
+                <OpenInNew />
+              </IconButton>
+            </Tooltip>
+          </div>
+        </Box>
+      </Paper>
+      <ConfirmationDialog
+        open={confirmDialogOpen}
+        title={t("delete_confirm_title")}
+        message={t("delete_confirm_message")}
+        confirmText={t("confirm")}
+        cancelText={t("cancel")}
+        onConfirm={() => {
+          setConfirmDialogOpen(false);
+          deleteDataset();
         }}
-      >
-        <div>
-        <Typography variant="body1">{language}</Typography>
-        <Typography variant="body1">
-          {t("speaker")}: {speakerName}
-        </Typography>
-        </div>
-
-        <div style={{
-          alignSelf: "end",
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 3,
-        }}>
-        <Tooltip title={t("delete")}>
-        <IconButton
-          onClick={() => setConfirmDialogOpen(true)}
-          size="large"
-          color="primary"
-          sx={{ padding: 0, margin: 0, alignSelf: "end" }}
-        >
-          <Delete />
-        </IconButton>
-        </Tooltip>
-        <Tooltip title={t("open")}>
-        <IconButton
-          onClick={() => router.push(`/my_datasets/overview/${id}/${type === ProjectType.Corpus ? "corpus" : "convo"}`)}
-          size="large"
-          color="primary"
-          sx={{ padding: 0, margin: 0, alignSelf: "end" }}
-        >
-          <OpenInNew />
-        </IconButton>
-        </Tooltip>
-        </div>
-      </Box>
-    </Paper>
-    <ConfirmationDialog 
-      open={confirmDialogOpen}
-      title={t("delete_confirm_title")}
-      message={t("delete_confirm_message")}
-      confirmText={t("confirm")}
-      cancelText={t("cancel")}
-      onConfirm={() => {
-        setConfirmDialogOpen(false);
-        deleteDataset();
-      }}
-      onCancel={() => setConfirmDialogOpen(false)}
-    />
+        onCancel={() => setConfirmDialogOpen(false)}
+      />
     </>
   );
 }

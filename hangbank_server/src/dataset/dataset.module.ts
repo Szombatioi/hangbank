@@ -14,6 +14,7 @@ import { AiModel } from 'src/ai_model/entities/ai_model.entity';
 import { AudioBlockModule } from 'src/audio_block/audio_block.module';
 import { AiChatModule } from 'src/ai-chat/ai-chat.module';
 import { AiChat } from 'src/ai-chat/entities/ai-chat.entity';
+import { MinioModule } from 'src/minio/minio.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { AiChat } from 'src/ai-chat/entities/ai-chat.entity';
     MicrophoneModule,
     LanguageModule,
     AiChatModule,
+    MinioModule,
     forwardRef(()=>AudioBlockModule),
     forwardRef(()=>AiChatModule)
   ],

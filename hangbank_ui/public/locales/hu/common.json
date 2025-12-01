@@ -100,5 +100,8 @@
     "cancel": "Mégse",
     "delete_success": "Sikeres törlés",
     "delete_fail": "Hiba a törlés során!",
-    "selected_topic": "Választott téma"
+    "selected_topic": "Választott téma",
+    "download": "Letöltés",
+    "download_fail": "Sikertelen letöltés",
+    "download_success": "Sikeres letöltés"
 }

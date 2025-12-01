@@ -39,4 +39,11 @@ export class DatasetController {
   remove(@Req() req, @Param('id') id: string) {
     return this.datasetService.remove(req.user, id);
   }
+
+  @Get('download/:id')
+  @UseGuards(JwtAuthGuard)
+  async download(@Req() req, @Param('id') id: string){
+    return this.datasetService.downloadDataset(req.user, id);
+  }
+
 }
