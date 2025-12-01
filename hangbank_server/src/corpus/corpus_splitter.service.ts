@@ -99,6 +99,7 @@ export class FileCorpusService {
     filePath: string,
     outputPath?: string,
   ): Promise<string[]> {
+    console.log("Filepath: ", filePath);
     const ext = path.extname(filePath).toLowerCase();
     let text: string;
 

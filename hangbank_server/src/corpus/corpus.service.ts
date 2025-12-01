@@ -43,16 +43,21 @@ export class CorpusService {
     // console.log('Corpus entity created');
 
     //Download the uploaded file temporarily
-    const tempPath = path.join(
+    
+    const tempFolderPath = path.join(
       __dirname,
       '..',
       '..',
       '..',
       'corpus_splitter',
       'temp',
+    );
+    const tempFilePath = path.join(
+      tempFolderPath,
       file.originalname,
     );
-    fs.writeFileSync(tempPath, file.buffer);
+    fs.mkdirSync(tempFolderPath, { recursive: true });
+    fs.writeFileSync(tempFilePath, file.buffer);
     // console.log('Temp file downloaded');
 
     //Step 2. Generate Corpus Blocks from Corpus (((via Python script)))
