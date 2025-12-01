@@ -6,6 +6,8 @@ This is an experimental version and may contain some bugs.
 Feel free to reach out reporting the issues.
 
 # Installation
+Firstly, clone this repository via the following command:\
+`git clone https://github.com/Szombatioi/hangbank.git`
 
 ## Setup MinIO
 Have a docker compose file ready with this content in the root folder ("hangbank" folder):
@@ -51,11 +53,41 @@ Make sure that USERNAME and PASSWORD are set to "hangbank".
 This database will store our database entities.
 
 ## Start Backend
-Go to the `hangbank_server` folder and run this command to start developer mode:\
+Go to the `hangbank_server` folder and run the following commands to start developer mode:\
+ `npm i`
+
+This installs the dependencies. Then create a .env file in the current folder (hangbank_server) with the following content:
+`MINIO_ENDPOINT=localhost`
+`MINIO_PORT=9000`
+`MINIO_ACCESS_KEY=minioadmin`
+`MINIO_SECRET_KEY=minioadmin123`
+`MINIO_PUBLIC_URL=http://localhost:9001`
+
+`DB_HOST=localhost`
+`DB_PORT=5432`
+`DB_USER=hangbank`
+`DB_PASS=hangbank`
+`DB_NAME=hangbank_dev`
+
+`JWT_SECRET=<your-jwt-secret>`
+
+Note that you'll need to generate a JWT secret. You can do this by any jwt secret generator, for example: https://jwtsecrets.com/
+(Make sure it is at least 64 characters [256 bits] long)
+
+The you can start the backend via:
  `npm run start:dev`
 
 ## Start Frontend
 In another terminal, go into the `hangbank_ui` folder and run:\
+`npm i`
+
+This will install dependencies. Then create a .env file in the current folder (hangbank_ui) with the following content:
+`NEXT_PUBLIC_NEST_API_URL=http://localhost:3001`
+`NEXT_PUBLIC_GEMINI_API_KEY=<your_api_key>`
+
+Note that you'll need a Gemini API key to work, you can generate this on the Gemini API.
+
+Then you can start the frontend via:\
 `npm run dev`
 
 # Start using the app
