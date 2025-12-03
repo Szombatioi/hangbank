@@ -464,7 +464,7 @@ export class DatasetService {
     const user = await this.userService.findOneById(userId); //We need to find the user, because what if they do not exist?
     const dataset = await this.datasetRepository.findOne({
       where: { id: datasetId },
-      relations: { creator: true, audioBlocks: { corpusBlock: true }, aiChat: {aiChatHistory: true} },
+      relations: { creator: true, audioBlocks: { corpusBlock: true }, aiChat: {aiChatHistory: true}, metadata: { speakers: { user: true } } },
     });
     if (!dataset)
       throw new NotFoundException('Dataset not found with ID: ', datasetId);
@@ -480,6 +480,7 @@ export class DatasetService {
     archive.pipe(archiveStream);
 
     const metadataLines: string[] = [];
+    const infoLines: string[] = [];
 
     let fileIndex = 1;
 
@@ -503,6 +504,10 @@ export class DatasetService {
 
         fileIndex++;
       };
+
+      for(const speaker of dataset.metadata.speakers){
+        infoLines.push(`${speaker.user.name}|${speaker.currentAge}|${speaker.speechDialect === null || speaker.speechDialect === undefined || speaker.speechDialect === "" ? '-' : speaker.speechDialect}|${speaker.microphone.deviceId}|${speaker.microphone.label}|${speaker.samplingFrequency}`);
+      }
 
     if (dataset.mode === RecordingMode.Corpus) {
       fileIndex = 1;
@@ -539,6 +544,7 @@ export class DatasetService {
 
     //Add metadata to the ZIP
     archive.append(metadataLines.join("\n"), { name: "dataset/metadata.csv" });
+    archive.append(infoLines.join("\n"), { name: "dataset/info.csv" });
     await archive.finalize();
     return new StreamableFile(archiveStream, {
       disposition: `attachment; filename="${dataset.name}.zip"`
