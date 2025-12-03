@@ -107,3 +107,26 @@ b. Conversation based: Choose a topic and record your answer to the ai chat. Pre
 
 ## Audio blocks quality
 If a corpus block's recorded audio has issues (too noisy, too loud etc.) there will be an yellow indicator on the dataset overview in the proper corpus block card.
+
+## Download dataset
+You can download your recorded dataset via the download button on the *My Datasets* page.
+The downloaded .zip file contains the following:
+```txt
+dataset
+  - audio
+    - 0001.wav
+    - 0002.wav
+    - ...
+  - info.csv
+  - metadata.csv
+```
+
+`info.csv` contains details about the speakers and microphones, each row contains one description in this format:
+```
+Speaker name|Current age|Speech dialects|Microphone ID|Microphone name|Sampling frequency
+```
+
+`metadata.csv` contains info about the audio files, each row describing each audio file's name and their transcription:
+```
+0001.wav|There is a line of text here
+```

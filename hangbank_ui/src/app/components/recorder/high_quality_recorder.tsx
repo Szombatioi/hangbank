@@ -109,15 +109,10 @@ export default function HighQualityRecorder({
         }
       }
 
-      // 1. Frissítjük a FŐ (lezárt) transcript állapotot:
       if (final.length > 0) {
-        // Hozzáadjuk a végleges szöveget a korábbi végleges szöveghez
         setTranscript((prev) => (prev.trim() + " " + final.trim()).trim());
       }
 
-      // 2. A Webspeech API által adott teljes (lezárt + ideiglenes) szöveget tároljuk a WSI state-ben
-      // Ezt jelenítheted meg a dobozban, mint a pillanatnyi szöveget.
-      // Mivel az event.results már tartalmazza az interim részt, csak ezt kell beállítani:
       setWsiTranscript(interim);
     };
 
@@ -136,13 +131,10 @@ export default function HighQualityRecorder({
 
   const startTranscribe = () => {
     if (useTranscript && recognitionRef.current) {
-      // 💡 JAVÍTÁS: A start() hívást try...catch blokkba tesszük
       try {
         recognitionRef.current.start();
         // console.log("Transcribe started in startTranscribe function");
       } catch (error: any) {
-        // Ha már fut, az "InvalidStateError" hibát kapjuk,
-        // amit egyszerűen figyelmen kívül hagyunk.
         if (error.name === "InvalidStateError") {
           console.warn(
             "SpeechRecognition already started, ignoring redundant call."
